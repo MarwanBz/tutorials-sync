@@ -26,6 +26,7 @@ import type * as newsletter from "../newsletter.js";
 import type * as newsletterActions from "../newsletterActions.js";
 import type * as pages from "../pages.js";
 import type * as posts from "../posts.js";
+import type * as quiz from "../quiz.js";
 import type * as rss from "../rss.js";
 import type * as search from "../search.js";
 import type * as semanticSearch from "../semanticSearch.js";
@@ -58,6 +59,7 @@ declare const fullApi: ApiFromModules<{
   newsletterActions: typeof newsletterActions;
   pages: typeof pages;
   posts: typeof posts;
+  quiz: typeof quiz;
   rss: typeof rss;
   search: typeof search;
   semanticSearch: typeof semanticSearch;

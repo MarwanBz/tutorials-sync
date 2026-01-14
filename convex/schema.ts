@@ -281,4 +281,51 @@ export default defineSchema({
     key: v.string(), // Setting key: "enabled"
     value: v.boolean(), // Setting value
   }).index("by_key", ["key"]),
+
+  // Quizzes for testing understanding of tutorials/posts
+  // Each quiz belongs to a post and contains multiple questions
+  quizzes: defineTable({
+    postSlug: v.string(), // Reference to the post this quiz belongs to
+    title: v.string(), // Quiz title
+    description: v.optional(v.string()), // Optional description
+    questions: v.array(
+      // Questions with multiple choice options
+      v.object({
+        id: v.string(), // Unique question ID within the quiz
+        question: v.string(), // Question text
+        options: v.array(v.string()), // Answer options
+        correctAnswer: v.number(), // Index of correct option (0-based)
+        explanation: v.optional(v.string()), // Explanation for the answer
+      })
+    ),
+    published: v.boolean(), // Whether the quiz is published
+    createdAt: v.number(), // Timestamp when quiz was created
+    updatedAt: v.number(), // Timestamp when quiz was last updated
+  })
+    .index("by_postSlug", ["postSlug"])
+    .index("by_published", ["published"]),
+
+  // Quiz submissions to track user answers and scores
+  // Links to quiz via quizId, tracks anonymous sessions via sessionId
+  quizSubmissions: defineTable({
+    quizId: v.id("quizzes"), // Reference to the quiz
+    postSlug: v.string(), // Denormalized postSlug for efficient queries
+    sessionId: v.string(), // Anonymous session identifier from localStorage
+    answers: v.array(
+      v.object({
+        questionId: v.string(), // Question ID being answered
+        selectedAnswer: v.number(), // Index of selected option
+        isCorrect: v.boolean(), // Whether the answer was correct
+      })
+    ),
+    score: v.number(), // Number of correct answers
+    totalQuestions: v.number(), // Total number of questions in the quiz
+    percentage: v.number(), // Score as percentage (0-100)
+    submittedAt: v.number(), // Timestamp when submitted
+  })
+    .index("by_quizId", ["quizId"])
+    .index("by_postSlug", ["postSlug"])
+    .index("by_session_post", ["sessionId", "postSlug"])
+    .index("by_sessionId", ["sessionId"])
+    .index("by_submittedAt", ["submittedAt"]),
 });
