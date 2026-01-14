@@ -10,6 +10,7 @@ import Footer from "../components/Footer";
 import SocialFooter from "../components/SocialFooter";
 import NewsletterSignup from "../components/NewsletterSignup";
 import ContactForm from "../components/ContactForm";
+import Quiz from "../components/Quiz";
 import { extractHeadings } from "../utils/extractHeadings";
 import { useSidebar } from "../context/SidebarContext";
 import { format, parseISO } from "date-fns";
@@ -570,6 +571,9 @@ export default function Post({
                 <ContactForm source={`page:${page.slug}`} />
               )}
 
+            {/* Quiz - shown when quiz is available for this page */}
+            <Quiz postSlug={page.slug} />
+
             {/* Newsletter signup - respects frontmatter override (only if not inline) */}
             {siteConfig.newsletter?.enabled &&
               (page.newsletter !== undefined
@@ -1011,7 +1015,12 @@ export default function Post({
               !post.content.includes("<!-- contactform -->") && (
                 <ContactForm source={`post:${post.slug}`} />
               )}
+
+            {/* Quiz - shown when quiz is available for this post */}
           </footer>
+
+          {/* Quiz - shown when quiz is available for this post */}
+          <Quiz postSlug={post.slug} />
 
           {/* Footer - shown inside article at bottom for posts */}
           {siteConfig.footer.enabled &&

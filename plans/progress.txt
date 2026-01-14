@@ -145,3 +145,40 @@ Started: 2025-01-13
 - The submitQuiz mutation grades answers and calculates percentage automatically
 
 ---
+
+## 2025-01-14 - US-008
+- Created src/components/Quiz.tsx with full quiz UI functionality (~280 lines)
+- Features implemented:
+  - Question display with A/B/C/D letter markers for options
+  - Progress bar showing answered questions count
+  - Option selection with visual feedback (selected state)
+  - Submit button with validation (all questions must be answered)
+  - Score display after submission with percentage
+  - Color-coded results (green for 80%+, yellow for 60%+, red below 60%)
+  - Visual indicators for correct (green with checkmark) and incorrect (red with X) answers
+  - Explanation display for incorrect answers
+  - Retry button to reset and take quiz again
+  - Anonymous session tracking via localStorage (quiz_session_id)
+  - Previous submission restoration from getPreviousSubmission query
+- Added ~280 lines of CSS in global.css for quiz styling
+- CSS includes theme-aware colors for all 4 themes, mobile responsive design, and accessibility features
+- Integrated Quiz component into Post.tsx for both pages and posts (after ContactForm)
+- Used lucide-react icons (Check, X, RotateCcw) for result indicators
+- Used useQuery and useMutation hooks for Convex integration
+
+**Decisions made and reasoning:**
+- Used Map<string, number> for selectedAnswers state for O(1) lookups by questionId
+- Session ID pattern follows aiChats implementation (localStorage with unique ID)
+- Quiz renders null when no quiz is available (graceful degradation)
+- Progress bar provides visual feedback on completion status
+- Letter markers (A, B, C, D) instead of radio buttons for cleaner UI
+- Icons for correct/incorrect provide better accessibility than color alone
+
+**Learnings for future iterations:**
+- The Quiz component conditionally renders (null) when quiz data is not available
+- localStorage key naming: "quiz_session_id" for consistency with potential future quiz features
+- Previous submission restoration allows users to see their past results on page reload
+- The component uses getQuizByPostSlug query which only returns published quizzes
+- CSS class naming follows BEM-like pattern: .quiz, .quiz__question, .quiz__option, etc.
+
+---
