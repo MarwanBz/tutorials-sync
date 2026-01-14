@@ -1,0 +1,184 @@
+{
+  "project": "Tutorials Sync",
+  "branchName": "feature/tutorials-sync",
+  "description": "Convert markdown-site blog into a learning platform with quizzes, progress tracking, and two-way sync for tutorial markdown files",
+  "userStories": [
+    {
+      "id": "US-001",
+      "title": "Create fork-config.json with site details",
+      "description": "Set up site configuration for the tutorials learning platform",
+      "acceptanceCriteria": [
+        "Copy fork-config.json.example to fork-config.json",
+        "Set siteName to 'Tutorials Sync' or similar",
+        "Set githubUsername to 'MarwanBz'",
+        "Set githubRepo to 'markdown-site'",
+        "Disable blog-specific features (logoGallery, gitHubContributions)",
+        "Run npm run configure successfully",
+        "Verify 11 files updated"
+      ],
+      "priority": 1,
+      "passes": true,
+      "notes": "Configuration was already applied. 14 files updated by configure script."
+    },
+    {
+      "id": "US-002",
+      "title": "Initialize Convex backend",
+      "description": "Set up Convex project and database",
+      "acceptanceCriteria": [
+        "Run npx convex dev successfully",
+        ".env.local file created with Convex URL",
+        "Convex dashboard accessible",
+        "Database tables created"
+      ],
+      "priority": 2,
+      "passes": true,
+      "notes": "Requires Convex account signup"
+    },
+    {
+      "id": "US-003",
+      "title": "Update sync script to point to coding-tutor-tutorials",
+      "description": "Modify sync script to read from /home/marwan/coding-tutor-tutorials/ instead of content/blog/",
+      "acceptanceCriteria": [
+        "Update scripts/sync-posts.ts to read from correct path",
+        "Test sync with existing tutorials",
+        "Tutorials appear in local dev server",
+        "Typecheck passes"
+      ],
+      "priority": 3,
+      "passes": true,
+      "notes": "Updated CONTENT_DIR to ~/coding-tutor-tutorials. Made title/date/slug optional in PostFrontmatter interface. Added parse logic to derive title from H1, slug from filename, date from created/filename. All 8 tutorials synced successfully."
+    },
+    {
+      "id": "US-004",
+      "title": "Update Convex schema for tutorial metadata",
+      "description": "Add tutorial-specific fields to database schema",
+      "acceptanceCriteria": [
+        "Add concepts field (array of strings)",
+        "Add understanding_score field (number 1-10 or null)",
+        "Add last_quizzed field (date or null)",
+        "Add prerequisites field (array of tutorial slugs)",
+        "Add source_repo field",
+        "Update validators in posts.ts",
+        "Typecheck passes"
+      ],
+      "priority": 4,
+      "passes": true,
+      "notes": "Added all tutorial-specific fields to schema and posts.ts validators. concepts is stored as comma-separated string to match sync script format."
+    },
+    {
+      "id": "US-005",
+      "title": "Remove blog-specific features from UI",
+      "description": "Clean up blog-related UI elements for learning platform",
+      "acceptanceCriteria": [
+        "Remove RSS feed links from navigation",
+        "Remove logo gallery from homepage",
+        "Remove GitHub contributions graph",
+        "Remove 'blog' terminology, replace with 'tutorials'",
+        "Theme still works (dark/light mode)",
+        "Verify in browser"
+      ],
+      "priority": 5,
+      "passes": true,
+      "notes": "Removed RSS link from Post.tsx share buttons. Changed 'Blog Posts' to 'Tutorials' in Stats.tsx. Changed 'Blog Post' to 'Tutorial' in Write.tsx. Logo gallery and GitHub contributions already disabled in config."
+    },
+    {
+      "id": "US-006",
+      "title": "Build reverse sync: Convex quiz results to MD files",
+      "description": "Create script that writes quiz results back to markdown frontmatter",
+      "acceptanceCriteria": [
+        "Create scripts/reverse-sync.ts",
+        "Fetches tutorials with updated understanding_score from Convex",
+        "Updates frontmatter in local MD files",
+        "Preserves existing frontmatter fields",
+        "Handles file write errors gracefully",
+        "Typecheck passes"
+      ],
+      "priority": 6,
+      "passes": true,
+      "notes": "Created reverse-sync.ts using gray-matter. Added getPostsWithQuizResults internal query to posts.ts. Script structure complete; will be functional once quiz mutations save understanding_score to Convex."
+    },
+    {
+      "id": "US-007",
+      "title": "Create quiz data model in Convex",
+      "description": "Add quiz-related tables and functions",
+      "acceptanceCriteria": [
+        "Add quizzes table to schema",
+        "Add quizSubmissions table to track user answers",
+        "Create quiz mutations in convex/quiz.ts",
+        "Create quiz queries in convex/quiz.ts",
+        "Validators on all functions",
+        "Typecheck passes"
+      ],
+      "priority": 7,
+      "passes": false,
+      "notes": ""
+    },
+    {
+      "id": "US-008",
+      "title": "Build quiz UI component",
+      "description": "Create React component for taking quizzes",
+      "acceptanceCriteria": [
+        "Quiz component shows questions",
+        "Multiple choice and fill-in-the-blank support",
+        "Submit button with validation",
+        "Shows score after submission",
+        "Calls Convex mutation to save results",
+        "Typecheck passes",
+        "Verify in browser"
+      ],
+      "priority": 8,
+      "passes": false,
+      "notes": "Add to src/components/Quiz.tsx"
+    },
+    {
+      "id": "US-009",
+      "title": "Build progress dashboard",
+      "description": "Replace /stats page with learning progress dashboard",
+      "acceptanceCriteria": [
+        "Show overall progress percentage",
+        "List all tutorials with understanding scores",
+        "Highlight concepts needing review",
+        "Show quiz history",
+        "Visual progress indicators",
+        "Typecheck passes",
+        "Verify in browser"
+      ],
+      "priority": 9,
+      "passes": false,
+      "notes": "Modify src/pages/Stats.tsx"
+    },
+    {
+      "id": "US-010",
+      "title": "Add quiz question generation from tutorial content",
+      "description": "Auto-generate quiz questions from tutorial markdown",
+      "acceptanceCriteria": [
+        "Extract key concepts from tutorial",
+        "Generate questions from code blocks and headers",
+        "Create multiple choice options",
+        "Store questions in Convex",
+        "Manual question override option",
+        "Typecheck passes"
+      ],
+      "priority": 10,
+      "passes": false,
+      "notes": "May use AI for question generation later"
+    },
+    {
+      "id": "US-011",
+      "title": "Deploy to Netlify and test end-to-end sync",
+      "description": "Deploy application and verify full sync pipeline works",
+      "acceptanceCriteria": [
+        "Connect repo to Netlify",
+        "Configure build settings",
+        "Add environment variables",
+        "Deploy successfully",
+        "Test sync from local MD to live site",
+        "Test quiz submission and reverse sync",
+        "Verify real-time updates work"
+      ],
+      "priority": 11,
+      "passes": false,
+      "notes": "Requires CONVEX_DEPLOY_KEY and VITE_CONVEX_URL"
+    }
+  ]
+}

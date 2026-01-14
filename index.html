@@ -1,0 +1,153 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+
+    <!-- Preconnect for faster API calls -->
+    <link rel="preconnect" href="https://convex.cloud" crossorigin />
+    <link rel="dns-prefetch" href="https://convex.cloud" />
+    <!-- Preconnect for Convex site endpoints -->
+    <link rel="preconnect" href="https://convex.site" crossorigin />
+    <link rel="dns-prefetch" href="https://convex.site" />
+    <!-- Preload critical LCP image -->
+    <link rel="preload" href="/images/logo.svg" as="image" type="image/svg+xml" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+
+    <!-- SEO Meta Tags -->
+    <meta
+      name="description"
+      content="My coding tutorials with quizzes, progress tracking, and spaced repetition."
+    />
+    <meta name="author" content="Tutorials Sync" />
+    <meta
+      name="keywords"
+      content="markdown site, Convex, Netlify, React, TypeScript, open source, real-time, sync"
+    />
+    <meta name="robots" content="index, follow" />
+
+    <!-- Canonical URL -->
+    <link rel="canonical" href="https://www.markdown.fast/" />
+
+    <!-- Hreflang for language/region targeting -->
+    <link rel="alternate" hreflang="en" href="https://www.markdown.fast/" />
+    <link rel="alternate" hreflang="x-default" href="https://www.markdown.fast/" />
+
+    <!-- Theme -->
+    <meta name="theme-color" content="#faf8f5" />
+
+    <!-- Critical CSS - inlined for fast first paint -->
+    <style>
+      /* Theme variables */
+      :root[data-theme="dark"]{--bg-primary:#111;--bg-secondary:#1a1a1a;--bg-hover:#252525;--text-primary:#fafafa;--text-secondary:#a1a1a1;--text-muted:#6b6b6b;--border-color:#2a2a2a;--accent:#fafafa}
+      :root[data-theme="light"]{--bg-primary:#fff;--bg-secondary:#fafafa;--bg-hover:#f5f5f5;--text-primary:#111;--text-secondary:#6b6b6b;--text-muted:#a1a1a1;--border-color:#e5e5e5;--accent:#111}
+      :root[data-theme="tan"]{--bg-primary:#faf8f5;--bg-secondary:#f5f3f0;--bg-hover:#ebe9e6;--text-primary:#1a1a1a;--text-secondary:#6b6b6b;--text-muted:#999;--border-color:#e6e4e1;--accent:#8b7355}
+      :root[data-theme="cloud"]{--bg-primary:#f5f5f5;--bg-secondary:#ebebeb;--bg-hover:#e0e0e0;--text-primary:#171717;--text-secondary:#525252;--text-muted:#737373;--border-color:#d4d4d4;--accent:#171717}
+      /* Reset and base */
+      *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+      html{font-size:16px;-webkit-font-smoothing:antialiased}
+      body{font-family:"New York",-apple-system-ui-serif,ui-serif,Georgia,serif;background-color:var(--bg-primary);color:var(--text-primary);line-height:1.6}
+      /* Layout skeleton */
+      .layout{min-height:100vh;display:flex;flex-direction:column;padding-top:60px}
+      .main-content{flex:1;max-width:800px;width:100%;margin:0 auto}
+      /* Fixed nav */
+      .top-nav{position:fixed;top:0;left:13px;right:13px;z-index:100;display:flex;align-items:center;gap:16px;background-color:var(--bg-primary);padding:8px 12px;border-radius:8px}
+      @media(max-width:1024px){.layout{padding:60px 15px 15px}}
+    </style>
+
+    <!-- Theme initialization - runs before any rendering to prevent FOUC -->
+    <script>
+      (function() {
+        var theme = 'tan';
+        try {
+          var saved = localStorage.getItem('blog-theme');
+          if (saved && ['dark', 'light', 'tan', 'cloud'].includes(saved)) {
+            theme = saved;
+          }
+        } catch(e) {}
+        document.documentElement.setAttribute('data-theme', theme);
+        var colors = { dark: '#111111', light: '#ffffff', tan: '#faf8f5', cloud: '#f5f5f5' };
+        var meta = document.querySelector('meta[name="theme-color"]');
+        if (meta) meta.setAttribute('content', colors[theme] || colors.tan);
+      })();
+    </script>
+
+    <!-- Open Graph -->
+    <meta property="og:title" content="Tutorials Sync" />
+    <meta
+      property="og:description"
+      content="My coding tutorials with quizzes, progress tracking, and spaced repetition."
+    />
+    <meta property="og:type" content="website" />
+    <meta property="og:url" content="https://tutorials-sync.netlify.app/" />
+    <meta
+      property="og:site_name"
+      content="markdown sync publishing framework"
+    />
+    <meta
+      property="og:image"
+      content="https://tutorials-sync.netlify.app/images/og-default.png"
+    />
+
+    <!-- Twitter Card -->
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta property="twitter:domain" content="tutorials-sync.netlify.app" />
+    <meta property="twitter:url" content="https://tutorials-sync.netlify.app/" />
+    <meta name="twitter:title" content="Tutorials Sync" />
+    <meta
+      name="twitter:description"
+      content="My coding tutorials with quizzes, progress tracking, and spaced repetition."
+    />
+    <meta
+      name="twitter:image"
+      content="https://tutorials-sync.netlify.app/images/og-default.png"
+    />
+    <!-- twitter:site - configure in siteConfig.ts for your Twitter handle -->
+    <meta name="twitter:site" content="" />
+    <meta name="twitter:creator" content="" />
+
+    <!-- RSS Feeds -->
+    <link
+      rel="alternate"
+      type="application/rss+xml"
+      title="RSS Feed"
+      href="/rss.xml"
+    />
+    <link
+      rel="alternate"
+      type="application/rss+xml"
+      title="RSS Feed (Full Content)"
+      href="/rss-full.xml"
+    />
+
+    <!-- LLM and AI Discovery -->
+    <link rel="author" href="/llms.txt" />
+
+    <!-- JSON-LD Structured Data for Homepage -->
+    <script type="application/ld+json">
+      {
+        "@context": "https://schema.org",
+        "@type": "WebSite",
+        "name": "Tutorials Sync",
+        "url": "https://tutorials-sync.netlify.app",
+        "description": "My coding tutorials with quizzes, progress tracking, and spaced repetition.",
+        "author": {
+          "@type": "Organization",
+          "name": "Tutorials Sync",
+        "url": "https://tutorials-sync.netlify.app"
+        },
+        "potentialAction": {
+          "@type": "SearchAction",
+          "target": "https://tutorials-sync.netlify.app/?q={search_term_string}",
+          "query-input": "required name=search_term_string"
+        }
+      }
+    </script>
+
+    <title>Interactive Learning Platform</title>
+  </head>
+  <body>
+    <div id="root"></div>
+    <script type="module" src="/src/main.tsx"></script>
+  </body>
+</html>

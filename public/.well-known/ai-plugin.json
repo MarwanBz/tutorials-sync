@@ -1,0 +1,17 @@
+{
+  "schema_version": "v1",
+  "name_for_human": "Tutorials Sync",
+  "name_for_model": "tutorials_sync",
+  "description_for_human": "My coding tutorials with quizzes, progress tracking, and spaced repetition.",
+  "description_for_model": "Access blog posts and pages in markdown format. Use /api/posts for a list of all posts with metadata. Use /api/post?slug={slug}&format=md to get full markdown content of any post. Use /api/export for batch content with full markdown.",
+  "auth": {
+    "type": "none"
+  },
+  "api": {
+    "type": "openapi",
+    "url": "/openapi.yaml"
+  },
+  "logo_url": "/images/logo.svg",
+  "contact_email": "marwan@marwanbaz.dev",
+  "legal_info_url": ""
+}

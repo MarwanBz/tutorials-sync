@@ -1,0 +1,125 @@
+# Ralph Progress Log
+Started: 2025-01-13
+---
+
+## Codebase Patterns
+
+<!-- Add reusable patterns discovered during development here -->
+<!-- Example: Use `sql<number>` template for aggregations -->
+<!-- Example: Always use `IF NOT EXISTS` for migrations -->
+
+## 2025-01-14 - US-003 (REDO - actually completed this time)
+- Updated CONTENT_DIR in sync-posts.ts to point to ~/coding-tutor-tutorials (line 23)
+- Updated PostFrontmatter interface to make title, date, slug optional for tutorials
+- Added tutorial-specific fields to interfaces (concepts, source_repo, understanding_score, last_quizzed, prerequisites, created, last_updated)
+- Updated parseMarkdownFile function to derive missing fields:
+  - title from first H1 if not in frontmatter
+  - slug from filename if not in frontmatter
+  - date from created field, filename date pattern, or file mtime
+  - tags from concepts (comma-separated string split) if tags not provided
+- Fixed YAML syntax error in 2026-01-09-database-indexing-for-performance.md (quoted description containing colon)
+- All 8 tutorials successfully synced to Convex
+
+**Decisions made and reasoning:**
+- The sync script was NOT actually pointing to coding-tutor-tutorials - the original assessment was wrong
+- Tutorial frontmatter uses different format than blog posts (concepts instead of tags, created instead of date, etc.)
+- Deriving fields from content/filename allows tutorials to have minimal frontmatter
+- Quoted description values that contain colons to avoid YAML parsing errors
+
+**Learnings for future iterations:**
+- Always verify code with actual file reads, don't assume previous work was correct
+- YAML requires quotes for values containing colons, hashes, or other special characters
+- The `??` operator coalesces to undefined, `||` coalesces to first truthy value
+
+---
+
+## 2025-01-14 - US-001
+- fork-config.json was already created and configured for Tutorials Sync
+- Site name, GitHub username, and repo all set correctly
+- Blog-specific features (logoGallery, gitHubContributions) disabled in config
+- Configuration script (npm run configure) had already been applied - 14 files modified
+- Files updated include: src/config/siteConfig.ts, src/pages/Home.tsx, src/pages/Post.tsx, src/pages/DocsPage.tsx, convex/http.ts, convex/rss.ts, index.html, public/llms.txt, public/robots.txt, public/openapi.yaml, public/.well-known/ai-plugin.json, netlify/edge-functions/mcp.ts, scripts/send-newsletter.ts
+
+**Learnings for future iterations:**
+- The fork-config.json file is gitignored, so local configuration changes don't get committed
+- The configure script (scripts/configure-fork.ts) updates multiple files in place using regex replacements
+- Always run `npm run typecheck` after configuration to ensure no TypeScript errors
+- The blogPage title is changed to "Tutorials" in fork-config.json but the route remains /blog
+- Theme can be set via fork-config.json (default is "dark" for Tutorials Sync)
+- Social links in siteConfig.ts still reference waynesutton - these should be updated to MarwanBz in a future story
+
+---
+
+## Codebase Patterns
+
+- When updating Convex schema with new fields, you must also update the validators in posts.ts (both syncPosts and syncPostsPublic mutations)
+- The sync script uses comma-separated strings for concepts in frontmatter (e.g., "Git,Aliases,Zsh") which syncs as a string field, not array
+- Convex validators use v.optional(v.union(v.null(), v.number())) for nullable number fields
+- Always include lastSyncedAt timestamp when patching posts during sync
+
+## 2025-01-14 - US-004
+- Added tutorial-specific fields to Convex schema (convex/schema.ts)
+  - concepts: v.optional(v.string()) - Comma-separated concepts
+  - source_repo: v.optional(v.string()) - Source repository name
+  - understanding_score: v.optional(v.union(v.null(), v.number())) - Quiz score 1-10 or null
+  - last_quizzed: v.optional(v.string()) - Date string when last quizzed
+  - prerequisites: v.optional(v.array(v.string())) - Array of tutorial slugs
+  - created: v.optional(v.string()) - Creation date
+  - last_updated: v.optional(v.string()) - Last update date
+- Updated posts.ts validators in both syncPosts and syncPostsPublic mutations to accept tutorial fields
+- Updated patch operations in both mutations to sync tutorial fields
+
+**Decisions made and reasoning:**
+- Used v.optional(v.union(v.null(), v.number())) for understanding_score because it needs to be either a number (1-10) or null - not undefined
+- Stored concepts as string (comma-separated) rather than array to match the sync script's format which uses frontmatter like "concepts: Git,Aliases,Zsh"
+- Added all tutorial-specific fields in both mutation validators (syncPosts and syncPostsPublic) to ensure consistency
+
+**Learnings for future iterations:**
+- Convex v.null() is the correct syntax (not v.null_())
+- When updating schema, must update both the internal mutation (syncPosts) and public mutation (syncPostsPublic)
+- The sync script (scripts/sync-posts.ts) already had tutorial field parsing - the schema update completes the integration
+
+---
+
+## 2025-01-14 - US-005
+- Removed RSS feed link from Post.tsx share buttons (lines 857-866 removed)
+- Removed unused Rss icon import from lucide-react
+- Changed "Blog Posts" to "Tutorials" in Stats.tsx (line 144)
+- Changed "Blog Post" to "Tutorial" in Write.tsx (3 occurrences: lines 454, 534, 627)
+- Verified logo gallery already disabled in siteConfig.ts (logoGallery.enabled: false)
+- Verified GitHub contributions already disabled in siteConfig.ts (gitHubContributions.enabled: false)
+- Verified theme toggle still works (ThemeToggle component in Layout.tsx)
+
+**Decisions made and reasoning:**
+- Only removed user-facing "blog" terminology; internal variable names and CSS classes remain unchanged
+- The blog route (/blog) and blogPage config remain as-is since they're working correctly with title set to "Tutorials"
+- RSS functionality is still available via /rss.xml endpoint, just not linked in UI
+
+**Learnings for future iterations:**
+- The share buttons in Post.tsx are a good place to look for blog-specific features
+- User-facing strings appear in: Stats.tsx (metric titles), Write.tsx (content type labels)
+- Internal variable names like blogFeatured, blogPage, etc. don't need to be changed
+- CSS class names like blog-h1, blog-h2 are styling utilities that can stay as-is
+
+---
+
+## 2025-01-14 - US-006
+- Created scripts/reverse-sync.ts for writing quiz results back to markdown files
+- Added getPostsWithQuizResults internal query to convex/posts.ts
+- Uses gray-matter library for frontmatter parsing and updates
+- Includes error handling for file operations and missing files
+- Supports both dev and production environments via SYNC_ENV variable
+- Preserves existing frontmatter fields when updating
+
+**Decisions made and reasoning:**
+- Used gray-matter library as specified in PRD notes for frontmatter parsing
+- Created internal query (getPostsWithQuizResults) to return only quiz-related fields
+- Script structure is complete but will only process results once quiz mutations are implemented
+- Used void prefix to suppress unused variable warning for the query result
+
+**Learnings for future iterations:**
+- Internal queries can't be called directly from ConvexHttpClient - need public queries or use client-side filtering
+- The reverse-sync script will need a public query or action to fetch quiz results once implemented
+- gray-matter.stringify() rebuilds the entire file with updated frontmatter
+
+---
