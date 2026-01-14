@@ -123,3 +123,25 @@ Started: 2025-01-13
 - gray-matter.stringify() rebuilds the entire file with updated frontmatter
 
 ---
+
+## 2025-01-14 - US-007
+- Verified quiz data model already implemented in convex/schema.ts (lines 285-331)
+- quizzes table: postSlug, title, description, questions (array with id, question, options, correctAnswer, explanation), published, createdAt, updatedAt
+- quizSubmissions table: quizId, postSlug, sessionId, answers (array with questionId, selectedAnswer, isCorrect), score, totalQuestions, percentage, submittedAt
+- Indexes: by_postSlug, by_published on quizzes; by_quizId, by_postSlug, by_session_post, by_sessionId, by_submittedAt on quizSubmissions
+- convex/quiz.ts contains 6 queries: getQuizByPostSlug, getQuizById, getAllQuizzes, getPreviousSubmission, getSubmissionsByPostSlug, getQuizStats
+- convex/quiz.ts contains 5 mutations: createQuiz, updateQuiz, deleteQuiz, submitQuiz, deleteSubmissionsForPost
+- All functions have validators using questionValidator and answerValidator schemas
+
+**Decisions made and reasoning:**
+- The quiz data model was already implemented by a previous iteration
+- No new code was needed - verified existing implementation meets all acceptance criteria
+- Used v.id("quizzes") for type-safe references between quizSubmissions and quizzes
+
+**Learnings for future iterations:**
+- The quizzes table uses an array of question objects directly in the table (not normalized)
+- quizSubmissions stores denormalized postSlug for efficient queries without joins
+- sessionId enables anonymous quiz tracking via localStorage (similar to aiChats pattern)
+- The submitQuiz mutation grades answers and calculates percentage automatically
+
+---
