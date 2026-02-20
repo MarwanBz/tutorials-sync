@@ -10,6 +10,7 @@ import siteConfig from "./config/siteConfig";
 const Home = lazy(() => import("./pages/Home"));
 const Post = lazy(() => import("./pages/Post"));
 const Stats = lazy(() => import("./pages/Stats"));
+const Practice = lazy(() => import("./pages/Practice"));
 const Blog = lazy(() => import("./pages/Blog"));
 const DocsPage = lazy(() => import("./pages/DocsPage"));
 const Write = lazy(() => import("./pages/Write"));
@@ -106,6 +107,8 @@ function App() {
           {siteConfig.statsPage?.enabled && (
             <Route path="/stats" element={<Stats />} />
           )}
+          {/* Practice page route */}
+          <Route path="/practice" element={<Practice />} />
           {/* Unsubscribe route for newsletter */}
           <Route path="/unsubscribe" element={<Unsubscribe />} />
           {/* Blog page route - only enabled when blogPage.enabled is true */}

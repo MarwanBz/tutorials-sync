@@ -4,7 +4,7 @@ Instructions for AI coding agents working on this codebase.
 
 ## Project overview
 
-Your content is instantly available to browsers, LLMs, and AI agents.. Write markdown, sync from the terminal. Your content is instantly available to browsers, LLMs, and AI agents. Built on Convex and Netlify.
+My coding tutorials with quizzes, progress tracking, and spaced repetition.. Write markdown, sync from the terminal. Your content is instantly available to browsers, LLMs, and AI agents. Built on Convex and Netlify.
 
 **Key features:**
 - Markdown posts with frontmatter
@@ -16,13 +16,13 @@ Your content is instantly available to browsers, LLMs, and AI agents.. Write mar
 
 ## Current Status
 
-- **Site Name**: markdown sync
-- **Site Title**: markdown sync framework
-- **Site URL**: https://yoursite.example.com
-- **Total Posts**: 20
+- **Site Name**: Tutorials Sync
+- **Site Title**: Interactive Learning Platform
+- **Site URL**: https://tutorials-sync.netlify.app
+- **Total Posts**: 10
 - **Total Pages**: 4
-- **Latest Post**: 2026-01-11
-- **Last Updated**: 2026-01-11T22:27:49.674Z
+- **Latest Post**: 2026-02-18
+- **Last Updated**: 2026-02-19T23:53:16.858Z
 
 ## Tech stack
 

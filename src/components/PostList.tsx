@@ -1,5 +1,6 @@
 import { Link } from "react-router-dom";
 import { format, parseISO } from "date-fns";
+import { Clock } from "lucide-react";
 
 interface Post {
   _id: string;
@@ -11,6 +12,8 @@ interface Post {
   tags: string[];
   excerpt?: string;
   image?: string;
+  understanding_score?: number | null;
+  last_quizzed?: string | null;
 }
 
 interface PostListProps {
@@ -33,6 +36,29 @@ function groupByYear(posts: Post[]): Record<string, Post[]> {
     },
     {} as Record<string, Post[]>
   );
+}
+
+// Get score color class
+function getScoreColorClass(score?: number | null): string {
+  if (!score) return "";
+  if (score >= 80) return "score-excellent";
+  if (score >= 60) return "score-good";
+  return "score-needs-review";
+}
+
+// Format last quizzed date
+function formatLastQuizzed(lastQuizzed?: string | null): string {
+  if (!lastQuizzed) return "";
+  const date = new Date(lastQuizzed);
+  const now = new Date();
+  const diffMs = now.getTime() - date.getTime();
+  const diffDays = Math.floor(diffMs / (1000 * 60 * 60 * 24));
+
+  if (diffDays === 0) return "Today";
+  if (diffDays === 1) return "Yesterday";
+  if (diffDays < 7) return `${diffDays}d ago`;
+  if (diffDays < 30) return `${Math.floor(diffDays / 7)}w ago`;
+  return `${Math.floor(diffDays / 30)}mo ago`;
 }
 
 export default function PostList({
@@ -67,7 +93,14 @@ export default function PostList({
               </div>
             )}
             <div className="post-card-content">
-              <h3 className="post-card-title">{post.title}</h3>
+              <div className="post-card-header-row">
+                <h3 className="post-card-title">{post.title}</h3>
+                {post.understanding_score !== null && post.understanding_score !== undefined && (
+                  <span className={`post-card-score ${getScoreColorClass(post.understanding_score)}`}>
+                    {post.understanding_score}%
+                  </span>
+                )}
+              </div>
               {/* Only show excerpt if showExcerpts is true */}
               {showExcerpts && (post.excerpt || post.description) && (
                 <p className="post-card-excerpt">
@@ -81,6 +114,11 @@ export default function PostList({
                 <span className="post-card-date">
                   {format(parseISO(post.date), "MMMM d, yyyy")}
                 </span>
+                {post.last_quizzed && (
+                  <span className="post-card-last-quiz" title={`Last quizzed: ${formatLastQuizzed(post.last_quizzed)}`}>
+                    <Clock size={14} />
+                  </span>
+                )}
               </div>
             </div>
           </Link>
@@ -102,7 +140,14 @@ export default function PostList({
             {groupedPosts[year].map((post) => (
               <li key={post._id} className="post-item">
                 <Link to={`/${post.slug}`} className="post-link">
-                  <span className="post-title">{post.title}</span>
+                  <div className="post-item-header">
+                    <span className="post-title">{post.title}</span>
+                    {post.understanding_score !== null && post.understanding_score !== undefined && (
+                      <span className={`post-item-score ${getScoreColorClass(post.understanding_score)}`}>
+                        {post.understanding_score}%
+                      </span>
+                    )}
+                  </div>
                   <span className="post-meta">
                     {post.readTime && (
                       <span className="post-read-time">{post.readTime}</span>
@@ -110,6 +155,12 @@ export default function PostList({
                     <span className="post-date">
                       {format(parseISO(post.date), "MMMM d")}
                     </span>
+                    {post.last_quizzed && (
+                      <span className="post-last-quiz" title={`Last quizzed: ${formatLastQuizzed(post.last_quizzed)}`}>
+                        <Clock size={14} />
+                        {formatLastQuizzed(post.last_quizzed)}
+                      </span>
+                    )}
                   </span>
                 </Link>
               </li>

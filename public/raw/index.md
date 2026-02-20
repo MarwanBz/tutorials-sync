@@ -30,8 +30,12 @@ agents. -->
 
 ---
 
-## Blog Posts (8)
+## Blog Posts (10)
 
+- **[Memory Leaks in React TypeScript](/raw/2026-02-18-memory-leaks-debugging-react-typescript.md)** - Understanding memory leaks in React TypeScript applications - how they happen, how to debug them using Chrome DevTools, and how to fix them. Includes hands-on demo app.
+  - Date: 2026-02-18 | Reading time: 11 min read | Tags: Memory Leaks, React useEffect Cleanup, Chrome DevTools, Heap Snapshots, Event Listeners, JavaScript Garbage Collection, Performance Debugging
+- **[TanStack Query v5: Complete Guide with Code Review](/raw/2026-01-31-tanstack-query-v5-complete-guide.md)** - Complete TanStack Query v5 guide - from query keys factory to advanced patterns. Code review of basma-mobile with actionable improvements.
+  - Date: 2026-01-31 | Reading time: 14 min read | Tags: TanStack Query v5, Query Keys Factory, Query Options, Optimistic Updates, Prefetching, Infinite Queries
 - **[Controlled vs Uncontrolled Forms: Complete Guide](/raw/2026-01-11-controlled-vs-uncontrolled-forms.md)** - Understanding when and how to use controlled vs uncontrolled components in React forms. From the mental model to your actual DatePicker implementation - this is your complete guide to form state management in 2025.
   - Date: 2026-01-11 | Reading time: 12 min read | Tags: Controlled Components, Uncontrolled Components, React Forms, Formik, State Management, Refs, Form Libraries, React 19 Form Actions
 - **[React Query Mutations: Modern Best Practices](/raw/2026-01-10-react-query-mutations-best-practices.md)** - Mastering React Query mutations - from error handling to cache invalidation. Learn modern patterns that eliminate try/catch and make your code more maintainable.
@@ -71,12 +75,12 @@ agents. -->
 
 ---
 
-**Total Content:** 8 posts, 17 pages
+**Total Content:** 10 posts, 17 pages
 
 All content is available as raw markdown files at `/raw/{slug}.md`
 
 ---
 
-Built with [Convex](https://convex.dev) for real-time sync and deployed on [Netlify](https://netlify.com). Read the [project on GitHub](https://github.com/waynesutton/markdown-site) to fork and deploy your own. View [real-time site stats](/stats).
+Built with [Convex](https://convex.dev) for real-time sync and deployed on [Vercel](https://vercel.com). View [real-time site stats](/stats).
 
-Created by [Wayne](https://x.com/waynesutton) with Convex, Cursor, and Claude Opus 4.5. Follow on [Twitter/X](https://x.com/waynesutton), [LinkedIn](https://www.linkedin.com/in/waynesutton/), and [GitHub](https://github.com/waynesutton). This project is licensed under the MIT [License](https://github.com/waynesutton/markdown-site?tab=MIT-1-ov-file).
+Created by [Marwan](https://www.marwanbaz.dev/) with Convex, Cursor, and Claude Opus 4.5. Follow on [GitHub](https://github.com/MarwanBz) and [LinkedIn](https://linkedin.com/in/marwanbz). This project is licensed under the MIT [License](https://github.com/MarwanBz/tutorials-sync?tab=MIT-1-ov-file).

@@ -5,8 +5,9 @@ published: true
 order: 5
 rightSidebar: false
 layout: "sidebar"
-docsSection: true
+docsSection: false
 docsSectionOrder: 4
+showInNav: false
 ---
 
 All notable changes to this project.
