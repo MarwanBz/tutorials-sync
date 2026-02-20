@@ -827,6 +827,30 @@ export default function Post({
               <p className="post-description">{post.description}</p>
             )}
           </header>
+
+          {/* Progress bar for tutorial quizzes */}
+          {(post.understanding_score !== undefined && post.understanding_score !== null) && (
+            <div className="post-progress-bar">
+              <div className="post-progress-header">
+                <span className="post-progress-label">Your Progress</span>
+                <span className={`post-progress-score ${post.understanding_score >= 80 ? 'score-excellent' : post.understanding_score >= 60 ? 'score-good' : 'score-needs-review'}`}>
+                  {post.understanding_score}%
+                </span>
+              </div>
+              <div className="post-progress-track">
+                <div
+                  className={`post-progress-fill ${post.understanding_score >= 80 ? 'fill-excellent' : post.understanding_score >= 60 ? 'fill-good' : 'fill-needs-review'}`}
+                  style={{ width: `${post.understanding_score}%` }}
+                />
+              </div>
+              {post.last_quizzed && (
+                <span className="post-progress-last">
+                  Last quizzed: {format(parseISO(post.last_quizzed), "MMM d, yyyy")}
+                </span>
+              )}
+            </div>
+          )}
+
           {/* Blog post content - raw markdown or rendered */}
           <BlogPost content={post.content} slug={post.slug} pageType="post" />
 

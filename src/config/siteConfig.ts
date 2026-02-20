@@ -434,7 +434,7 @@ export const siteConfig: SiteConfig = {
   // Optional logo/header image (place in public/images/, set to null to hide)
   logo: "/images/logo.svg",
   intro: null, // Set in Home.tsx to allow JSX with links
-  bio: `Product Engineer building complete software. These are my coding tutorials - mastered through quizzes and spaced repetition.`,
+  bio: `Personal learning platform for mastering frontend development through tutorials, quizzes, and spaced repetition.`,
 
   // Font family configuration
   // Options: "serif" (New York), "sans" (system fonts), "monospace" (IBM Plex Mono)
@@ -537,20 +537,26 @@ export const siteConfig: SiteConfig = {
   },
 
   // Hardcoded navigation items for React routes
-  // Add React route pages (like /stats, /write) that should appear in navigation
+  // Add React route pages (like /stats, /write, /practice) that should appear in navigation
   // Set showInNav: false to hide from nav while keeping the route accessible
   hardcodedNavItems: [
+    {
+      slug: "practice",
+      title: "Practice",
+      order: 3,
+      showInNav: true,
+    },
     {
       slug: "stats",
       title: "Stats",
       order: 10,
-      showInNav: true,
+      showInNav: false,
     },
     {
       slug: "write",
       title: "Write",
       order: 20,
-      showInNav: true,
+      showInNav: false,
     },
   ],
 
@@ -582,7 +588,7 @@ export const siteConfig: SiteConfig = {
   // Note: Content must be pushed to GitHub for AI links to work
   gitHubRepo: {
     owner: "MarwanBz", // GitHub username or organization
-    repo: "markdown-site", // Repository name
+    repo: "tutorials-sync", // Repository name
     branch: "main", // Default branch
     contentPath: "public/raw", // Path to raw markdown files
   },
@@ -630,22 +636,22 @@ export const siteConfig: SiteConfig = {
   // Set enabled: true and configure AgentMail to activate
   // Requires AGENTMAIL_API_KEY and AGENTMAIL_INBOX environment variables in Convex dashboard
   newsletter: {
-    enabled: true, // Set to true to enable newsletter signup forms
+    enabled: false, // Set to true to enable newsletter signup forms
     signup: {
       home: {
-        enabled: true,
+        enabled: false,
         position: "above-footer",
         title: "Stay Updated",
         description: "Get new posts delivered to your inbox.",
       },
       blogPage: {
-        enabled: true,
+        enabled: false,
         position: "above-footer",
         title: "Subscribe",
         description: "Get notified when new posts are published.",
       },
       posts: {
-        enabled: true,
+        enabled: false,
         position: "below-content",
         title: "Enjoyed this post?",
         description: "Subscribe for more updates.",
@@ -673,15 +679,13 @@ export const siteConfig: SiteConfig = {
     showOnPosts: true, // Default: show social footer on blog posts
     showOnPages: true, // Default: show social footer on static pages
     showOnBlogPage: true, // Show social footer on /blog page
-    showInHeader: true, // Show social icons in header (left of search icon)
+    showInHeader: false, // Show social icons in header (left of search icon)
     socialLinks: [
       {
         platform: "github",
-        url: "https://github.com/waynesutton/markdown-site",
+        url: "https://github.com/MarwanBz/tutorials-sync",
       },
-      { platform: "twitter", url: "https://x.com/waynesutton" },
-      { platform: "linkedin", url: "https://www.linkedin.com/in/waynesutton/" },
-      { platform: "discord", url: "https://www.convex.dev/community/" },
+      { platform: "linkedin", url: "https://linkedin.com/in/marwanbz" },
     ],
     copyright: {
       siteName: "Tutorials Sync", // Update with your site/company name
@@ -713,7 +717,7 @@ export const siteConfig: SiteConfig = {
     enabled: true, // Global toggle for docs section
     slug: "docs", // Base URL: /docs
     title: "Docs", // Page title
-    showInNav: true, // Show "Docs" link in navigation
+    showInNav: false, // Show "Docs" link in navigation
     order: 1, // Nav order (lower = first)
     defaultExpanded: true, // Expand all sidebar groups by default
   },
@@ -816,8 +820,8 @@ export const siteConfig: SiteConfig = {
   // Set your Twitter handle for twitter:site meta tag
   // Leave empty if you don't want to include twitter:site
   twitter: {
-    site: "@waynesutton", // Your Twitter handle (e.g., "@yoursite")
-    creator: "@waynesutton", // Default creator handle
+    site: "", // Your Twitter handle (e.g., "@yoursite")
+    creator: "", // Default creator handle
   },
 
   // Semantic search configuration
@@ -831,7 +835,7 @@ export const siteConfig: SiteConfig = {
   // Requires semanticSearch.enabled: true for content retrieval
   // Requires OPENAI_API_KEY (for embeddings) and ANTHROPIC_API_KEY or OPENAI_API_KEY (for LLM)
   askAI: {
-    enabled: true, // Set to true to enable Ask AI header button
+    enabled: false, // Set to true to enable Ask AI header button
     defaultModel: "claude-sonnet-4-20250514",
     models: [
       {

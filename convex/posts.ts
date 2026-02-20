@@ -81,6 +81,8 @@ export const getAllPosts = query({
       showFooter: v.optional(v.boolean()),
       footer: v.optional(v.string()),
       blogFeatured: v.optional(v.boolean()),
+      understanding_score: v.optional(v.union(v.null(), v.number())),
+      last_quizzed: v.optional(v.string()),
     }),
   ),
   handler: async (ctx) => {
@@ -118,6 +120,8 @@ export const getAllPosts = query({
       rightSidebar: post.rightSidebar,
       showFooter: post.showFooter,
       blogFeatured: post.blogFeatured,
+      understanding_score: post.understanding_score,
+      last_quizzed: post.last_quizzed,
     }));
   },
 });
@@ -242,6 +246,8 @@ export const getPostBySlug = query({
       newsletter: v.optional(v.boolean()),
       contactForm: v.optional(v.boolean()),
       docsSection: v.optional(v.boolean()),
+      understanding_score: v.optional(v.union(v.null(), v.number())),
+      last_quizzed: v.optional(v.string()),
     }),
     v.null(),
   ),
@@ -282,6 +288,8 @@ export const getPostBySlug = query({
       newsletter: post.newsletter,
       contactForm: post.contactForm,
       docsSection: post.docsSection,
+      understanding_score: post.understanding_score,
+      last_quizzed: post.last_quizzed,
     };
   },
 });
@@ -1094,6 +1102,172 @@ export const getDocsLandingPost = query({
       showFooter: landing.showFooter,
       footer: landing.footer,
       aiChat: landing.aiChat,
+    };
+  },
+});
+
+// Get learning progress data for the progress dashboard
+// Returns tutorials with quiz results and concept mastery tracking
+export const getLearningProgress = query({
+  args: {
+    sessionId: v.optional(v.string()), // Optional session ID for user-specific data
+  },
+  returns: v.object({
+    overallProgress: v.number(), // Percentage of tutorials with passing quiz scores
+    tutorials: v.array(
+      v.object({
+        slug: v.string(),
+        title: v.string(),
+        description: v.string(),
+        concepts: v.optional(v.string()), // Comma-separated concepts
+        understanding_score: v.optional(v.union(v.null(), v.number())),
+        last_quizzed: v.optional(v.string()),
+        hasQuiz: v.boolean(),
+        lastScore: v.optional(v.number()), // From user's last submission
+        lastQuizDate: v.optional(v.number()), // Timestamp of last submission
+        prerequisites: v.optional(v.array(v.string())),
+      })
+    ),
+    conceptsNeedingReview: v.array(
+      v.object({
+        concept: v.string(),
+        tutorialCount: v.number(),
+        averageScore: v.number(),
+      })
+    ),
+    quizHistory: v.array(
+      v.object({
+        postSlug: v.string(),
+        title: v.string(),
+        score: v.number(),
+        percentage: v.number(),
+        submittedAt: v.number(),
+      })
+    ),
+  }),
+  handler: async (ctx, args) => {
+    // Get all published posts (tutorials)
+    const posts = await ctx.db
+      .query("posts")
+      .withIndex("by_published", (q) => q.eq("published", true))
+      .collect();
+
+    // Filter out unlisted posts
+    const tutorials = posts.filter((p) => !p.unlisted);
+
+    // Get all quizzes to check which tutorials have quizzes
+    const quizzes = await ctx.db.query("quizzes").collect();
+    const quizPostSlugs = new Set(
+      quizzes.filter((q) => q.published).map((q) => q.postSlug)
+    );
+
+    // Get user's quiz submissions if sessionId provided
+    let userSubmissions: Map<string, any> | null = null;
+    if (args.sessionId) {
+      // Since by_sessionId index doesn't work as expected, collect all and filter
+      const allSubmissions = await ctx.db.query("quizSubmissions").collect();
+      const userSubmissionList = allSubmissions.filter(
+        (s) => s.sessionId === args.sessionId
+      );
+
+      userSubmissions = new Map();
+      for (const sub of userSubmissionList) {
+        // Keep only the most recent submission per post
+        const existing = userSubmissions.get(sub.postSlug);
+        if (!existing || sub.submittedAt > existing.submittedAt) {
+          userSubmissions.set(sub.postSlug, sub);
+        }
+      }
+    }
+
+    // Build tutorial data with quiz information
+    const tutorialData = tutorials.map((post) => {
+      const hasQuiz = quizPostSlugs.has(post.slug);
+      let lastScore: number | undefined;
+      let lastQuizDate: number | undefined;
+
+      if (userSubmissions && hasQuiz) {
+        const submission = userSubmissions.get(post.slug);
+        if (submission) {
+          lastScore = submission.percentage;
+          lastQuizDate = submission.submittedAt;
+        }
+      }
+
+      return {
+        slug: post.slug,
+        title: post.title,
+        description: post.description,
+        concepts: post.concepts,
+        understanding_score: post.understanding_score,
+        last_quizzed: post.last_quizzed,
+        hasQuiz,
+        lastScore,
+        lastQuizDate,
+        prerequisites: post.prerequisites,
+      };
+    });
+
+    // Calculate overall progress (percentage of tutorials with score >= 70%)
+    const tutorialsWithScores = tutorialData.filter(
+      (t) => t.lastScore !== undefined
+    );
+    const passingCount = tutorialsWithScores.filter(
+      (t) => (t.lastScore ?? 0) >= 70
+    ).length;
+    const overallProgress =
+      tutorialsWithScores.length > 0
+        ? Math.round((passingCount / tutorialsWithScores.length) * 100)
+        : 0;
+
+    // Build concepts needing review
+    // Collect all concepts from tutorials with scores < 70%
+    const conceptScores = new Map<string, number[]>();
+    for (const tutorial of tutorialData) {
+      if (!tutorial.concepts) continue;
+
+      const score = tutorial.lastScore ?? tutorial.understanding_score ?? 0;
+      if (score < 70 && score > 0) {
+        const concepts = tutorial.concepts.split(",").map((c) => c.trim());
+        for (const concept of concepts) {
+          if (!conceptScores.has(concept)) {
+            conceptScores.set(concept, []);
+          }
+          conceptScores.get(concept)!.push(score);
+        }
+      }
+    }
+
+    const conceptsNeedingReview = Array.from(conceptScores.entries())
+      .map(([concept, scores]) => ({
+        concept,
+        tutorialCount: scores.length,
+        averageScore: Math.round(scores.reduce((a, b) => a + b, 0) / scores.length),
+      }))
+      .sort((a, b) => a.averageScore - b.averageScore); // Sort by lowest scores first
+
+    // Build quiz history
+    let quizHistory: any[] = [];
+    if (userSubmissions) {
+      quizHistory = Array.from(userSubmissions.values())
+        .map((sub) => {
+          const post = tutorials.find((p) => p.slug === sub.postSlug);
+          return {
+            postSlug: sub.postSlug,
+            title: post?.title ?? sub.postSlug,
+            score: sub.score,
+            percentage: sub.percentage,
+            submittedAt: sub.submittedAt,
+          };
+        })
+        .sort((a, b) => b.submittedAt - a.submittedAt); // Most recent first
+    }
+
+    return {
+      overallProgress,
+      tutorials: tutorialData,
+      conceptsNeedingReview,
+      quizHistory,
     };
   },
 });

@@ -390,3 +390,50 @@ export const deleteSubmissionsForPost = mutation({
     return deleted;
   },
 });
+
+// Sync quiz from JSON file (used by sync-quizzes.ts script)
+// Upserts quiz by postSlug - creates new or updates existing
+export const syncQuiz = mutation({
+  args: {
+    quiz: v.object({
+      postSlug: v.string(),
+      title: v.string(),
+      description: v.optional(v.string()),
+      questions: v.array(questionValidator),
+    }),
+  },
+  returns: v.union(v.id("quizzes"), v.null()),
+  handler: async (ctx, args) => {
+    const now = Date.now();
+
+    // Check if quiz already exists for this post
+    const existing = await ctx.db
+      .query("quizzes")
+      .withIndex("by_postSlug", (q) => q.eq("postSlug", args.quiz.postSlug))
+      .first();
+
+    if (existing) {
+      // Update existing quiz
+      await ctx.db.patch(existing._id, {
+        title: args.quiz.title,
+        description: args.quiz.description,
+        questions: args.quiz.questions,
+        updatedAt: now,
+      });
+      return existing._id;
+    }
+
+    // Create new quiz
+    const quizId = await ctx.db.insert("quizzes", {
+      postSlug: args.quiz.postSlug,
+      title: args.quiz.title,
+      description: args.quiz.description,
+      questions: args.quiz.questions,
+      published: true,
+      createdAt: now,
+      updatedAt: now,
+    });
+
+    return quizId;
+  },
+});
