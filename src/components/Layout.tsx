@@ -9,6 +9,7 @@ import SearchModal from "./SearchModal";
 import AskAIModal from "./AskAIModal";
 import MobileMenu, { HamburgerButton } from "./MobileMenu";
 import ScrollToTop, { ScrollToTopConfig } from "./ScrollToTop";
+import AuthButton from "./AuthButton";
 import { useSidebarOptional } from "../context/SidebarContext";
 import siteConfig from "../config/siteConfig";
 import { platformIcons } from "./SocialFooter";
@@ -236,6 +237,8 @@ export default function Layout({ children }: LayoutProps) {
           <div className="theme-toggle-container">
             <ThemeToggle />
           </div>
+          {/* Auth button (Sign In when logged out, User avatar when logged in) */}
+          <AuthButton />
         </div>
 
         {/* Page navigation links (visible on desktop only) */}
@@ -301,6 +304,8 @@ export default function Layout({ children }: LayoutProps) {
           <div className="theme-toggle-container">
             <ThemeToggle />
           </div>
+          {/* Auth button (Sign In when logged out, User avatar when logged in) */}
+          <AuthButton />
         </div>
       </div>
 

@@ -20,11 +20,19 @@ import {
   PencilSimple,
   ClockCounterClockwise,
   TrendUp,
+  SignIn,
 } from "@phosphor-icons/react";
 import { Moon, Sun, Cloud } from "lucide-react";
 import { Half2Icon } from "@radix-ui/react-icons";
 import { useTheme } from "../context/ThemeContext";
 import siteConfig from "../config/siteConfig";
+import { isWorkOSConfigured } from "../utils/workos";
+import {
+  Authenticated as ConvexAuthenticated,
+  Unauthenticated as ConvexUnauthenticated,
+  AuthLoading as ConvexAuthLoading,
+} from "convex/react";
+import { useAuth as useWorkOSAuth } from "@workos-inc/authkit-react";
 
 // Helper to format timestamps
 function formatDate(timestamp: number): string {
@@ -61,6 +69,53 @@ function getThemeIcon(theme: string) {
   }
 }
 
+// Conditionally use auth components based on WorkOS configuration
+const Authenticated: React.ComponentType<{ children: React.ReactNode }> =
+  isWorkOSConfigured ? ConvexAuthenticated : ({ children }) => <>{children}</>;
+
+const Unauthenticated: React.ComponentType<{ children: React.ReactNode }> =
+  isWorkOSConfigured ? ConvexUnauthenticated : () => null;
+
+const AuthLoading: React.ComponentType<{ children: React.ReactNode }> =
+  isWorkOSConfigured ? ConvexAuthLoading : () => null;
+
+// Login prompt component for unauthenticated users
+// This component uses the WorkOS auth hook when configured
+function LoginPromptInner() {
+  // When WorkOS is configured, use the real hook
+  // eslint-disable-next-line react-hooks/rules-of-hooks
+  const { signIn } = isWorkOSConfigured ? useWorkOSAuth() : { signIn: () => {} };
+
+  return (
+    <div className="newsletter-admin-login-prompt">
+      <div className="newsletter-admin-login-content">
+        <div className="newsletter-admin-login-icon">
+          <SignIn size={48} weight="regular" />
+        </div>
+        <h1>Sign In Required</h1>
+        <p>You need to sign in to access the Newsletter Admin.</p>
+        <button onClick={() => signIn()} className="newsletter-admin-login-button">
+          <SignIn size={18} weight="regular" />
+          <span>Sign In</span>
+        </button>
+        <Link to="/" className="newsletter-admin-login-back">
+          <House size={16} weight="regular" />
+          <span>Back to Home</span>
+        </Link>
+      </div>
+    </div>
+  );
+}
+
+// Wrapper that only renders LoginPromptInner when unauthenticated
+function LoginPrompt() {
+  return (
+    <Unauthenticated>
+      <LoginPromptInner />
+    </Unauthenticated>
+  );
+}
+
 type FilterType = "all" | "subscribed" | "unsubscribed";
 type ViewMode =
   | "subscribers"
@@ -69,7 +124,7 @@ type ViewMode =
   | "recent-sends"
   | "email-stats";
 
-export default function NewsletterAdmin() {
+function NewsletterAdminContent() {
   const { theme, toggleTheme } = useTheme();
 
   // View mode state - controls what shows in main area
@@ -97,18 +152,7 @@ export default function NewsletterAdmin() {
   } | null>(null);
   const [copied, setCopied] = useState(false);
 
-  // Check if admin is enabled
-  if (!siteConfig.newsletterAdmin?.enabled) {
-    return (
-      <div className="newsletter-admin-disabled">
-        <h1>Newsletter Admin</h1>
-        <p>Newsletter admin is disabled in site configuration.</p>
-        <Link to="/">Back to Home</Link>
-      </div>
-    );
-  }
-
-  // Queries
+  // Queries (called before any early returns)
   const subscribersData = useQuery(api.newsletter.getAllSubscribers, {
     limit: 20,
     cursor,
@@ -128,6 +172,7 @@ export default function NewsletterAdmin() {
     api.newsletter.scheduleSendCustomNewsletter,
   );
 
+  // All callbacks must be defined before early returns
   // Handle view mode change
   const handleViewModeChange = useCallback((mode: ViewMode) => {
     setViewMode(mode);
@@ -253,6 +298,17 @@ export default function NewsletterAdmin() {
   const handlePrevPage = useCallback(() => {
     setCursor(undefined); // Reset to first page
   }, []);
+
+  // Check if admin is enabled (early return after all hooks)
+  if (!siteConfig.newsletterAdmin?.enabled) {
+    return (
+      <div className="newsletter-admin-disabled">
+        <h1>Newsletter Admin</h1>
+        <p>Newsletter admin is disabled in site configuration.</p>
+        <Link to="/">Back to Home</Link>
+      </div>
+    );
+  }
 
   // Get main area title based on view mode
   const getMainTitle = () => {
@@ -864,5 +920,22 @@ Supports markdown:
         {renderMainContent()}
       </main>
     </div>
+  );
+}
+
+// Main export with auth wrapper
+export default function NewsletterAdmin() {
+  return (
+    <>
+      <Authenticated>
+        <NewsletterAdminContent />
+      </Authenticated>
+      <Unauthenticated>
+        <LoginPrompt />
+      </Unauthenticated>
+      <AuthLoading>
+        <div className="newsletter-admin-loading">Loading...</div>
+      </AuthLoading>
+    </>
   );
 }
