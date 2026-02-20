@@ -582,7 +582,7 @@ export const siteConfig: SiteConfig = {
   // Note: Content must be pushed to GitHub for AI links to work
   gitHubRepo: {
     owner: "MarwanBz", // GitHub username or organization
-    repo: "markdown-site", // Repository name
+    repo: "tutorials-sync", // Repository name
     branch: "main", // Default branch
     contentPath: "public/raw", // Path to raw markdown files
   },
@@ -633,19 +633,19 @@ export const siteConfig: SiteConfig = {
     enabled: true, // Set to true to enable newsletter signup forms
     signup: {
       home: {
-        enabled: true,
+        enabled: false,
         position: "above-footer",
         title: "Stay Updated",
         description: "Get new posts delivered to your inbox.",
       },
       blogPage: {
-        enabled: true,
+        enabled: false,
         position: "above-footer",
         title: "Subscribe",
         description: "Get notified when new posts are published.",
       },
       posts: {
-        enabled: true,
+        enabled: false,
         position: "below-content",
         title: "Enjoyed this post?",
         description: "Subscribe for more updates.",
@@ -677,11 +677,9 @@ export const siteConfig: SiteConfig = {
     socialLinks: [
       {
         platform: "github",
-        url: "https://github.com/waynesutton/markdown-site",
+        url: "https://github.com/MarwanBz/tutorials-sync",
       },
-      { platform: "twitter", url: "https://x.com/waynesutton" },
-      { platform: "linkedin", url: "https://www.linkedin.com/in/waynesutton/" },
-      { platform: "discord", url: "https://www.convex.dev/community/" },
+      { platform: "linkedin", url: "https://linkedin.com/in/marwanbz" },
     ],
     copyright: {
       siteName: "Tutorials Sync", // Update with your site/company name
@@ -816,8 +814,8 @@ export const siteConfig: SiteConfig = {
   // Set your Twitter handle for twitter:site meta tag
   // Leave empty if you don't want to include twitter:site
   twitter: {
-    site: "@waynesutton", // Your Twitter handle (e.g., "@yoursite")
-    creator: "@waynesutton", // Default creator handle
+    site: "", // Your Twitter handle (e.g., "@yoursite")
+    creator: "", // Default creator handle
   },
 
   // Semantic search configuration
