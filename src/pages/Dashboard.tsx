@@ -62,6 +62,7 @@ import {
   ArrowsOut,
   ArrowsIn,
   FloppyDisk,
+  Question,
 } from "@phosphor-icons/react";
 import siteConfig from "../config/siteConfig";
 import AIChatView from "../components/AIChatView";
@@ -599,11 +600,32 @@ type DashboardSection =
   | "newsletter-recent-sends"
   | "newsletter-stats"
   | "import"
+  | "quizzes"
+  | "quiz-editor"
   | "config"
   | "index-html"
   | "stats"
   | "sync"
   | "media";
+
+// Quiz question type
+interface QuizQuestion {
+  id: string;
+  question: string;
+  options: string[];
+  correctAnswer: number;
+  explanation?: string;
+}
+
+// Quiz type for editing
+interface QuizItem {
+  _id?: Id<"quizzes">;
+  postSlug: string;
+  title: string;
+  description?: string;
+  questions: QuizQuestion[];
+  published: boolean;
+}
 
 // Post/Page type for editing
 interface ContentItem {
@@ -643,6 +665,15 @@ interface ContentItem {
   docsSectionGroupIcon?: string;
   docsLanding?: boolean;
   source?: "dashboard" | "sync";
+}
+
+// Quiz question type
+interface QuizQuestion {
+  id: string;
+  question: string;
+  options: string[];
+  correctAnswer: number;
+  explanation?: string;
 }
 
 // Frontmatter fields for posts
@@ -881,6 +912,7 @@ function DashboardContent() {
   const [searchQuery, setSearchQuery] = useState("");
   const [editingItem, setEditingItem] = useState<ContentItem | null>(null);
   const [editingType, setEditingType] = useState<"post" | "page">("post");
+  const [editingQuiz, setEditingQuiz] = useState<QuizItem | null>(null);
   const [showPreview, setShowPreview] = useState(false);
 
   // Sidebar collapsed state (persisted to localStorage)
@@ -957,6 +989,11 @@ function DashboardContent() {
   const deletePageMutation = useMutation(api.cms.deletePage);
   const updatePostMutation = useMutation(api.cms.updatePost);
   const updatePageMutation = useMutation(api.cms.updatePage);
+
+  // Quiz mutations
+  const createQuizMutation = useMutation(api.quiz.createQuiz);
+  const updateQuizMutation = useMutation(api.quiz.updateQuiz);
+  const deleteQuizMutation = useMutation(api.quiz.deleteQuiz);
 
   // Add toast notification
   const addToast = useCallback((message: string, type: ToastType = "info") => {
@@ -1311,6 +1348,74 @@ function DashboardContent() {
     [doSavePage],
   );
 
+  // Handle editing a quiz
+  const handleEditQuiz = useCallback(
+    (quiz: QuizItem) => {
+      setEditingQuiz(quiz);
+      setActiveSection("quiz-editor");
+    },
+    [],
+  );
+
+  // Handle deleting a quiz
+  const handleDeleteQuiz = useCallback(
+    async (quiz: QuizItem) => {
+      if (!quiz._id) return;
+
+      if (!confirm(`Are you sure you want to delete the quiz "${quiz.title}"?`)) {
+        return;
+      }
+
+      try {
+        await deleteQuizMutation({ quizId: quiz._id });
+        addToast("Quiz deleted successfully", "success");
+      } catch (error) {
+        addToast(
+          error instanceof Error ? error.message : "Failed to delete quiz",
+          "error",
+        );
+      }
+    },
+    [deleteQuizMutation, addToast],
+  );
+
+  // Handle saving a quiz
+  const handleSaveQuiz = useCallback(
+    async (quiz: QuizItem) => {
+      try {
+        if (quiz._id) {
+          // Update existing quiz
+          await updateQuizMutation({
+            quizId: quiz._id,
+            title: quiz.title,
+            description: quiz.description,
+            questions: quiz.questions,
+            published: quiz.published,
+          });
+          addToast("Quiz updated successfully", "success");
+        } else {
+          // Create new quiz
+          await createQuizMutation({
+            postSlug: quiz.postSlug,
+            title: quiz.title,
+            description: quiz.description,
+            questions: quiz.questions,
+            published: quiz.published,
+          });
+          addToast("Quiz created successfully", "success");
+        }
+        setEditingQuiz(null);
+        setActiveSection("quizzes");
+      } catch (error) {
+        addToast(
+          error instanceof Error ? error.message : "Failed to save quiz",
+          "error",
+        );
+      }
+    },
+    [createQuizMutation, updateQuizMutation, addToast],
+  );
+
   // Close sync warning modal
   const closeSyncWarningModal = useCallback(() => {
     if (!isSavingWithWarning) {
@@ -1433,6 +1538,7 @@ function DashboardContent() {
       items: [
         { id: "posts" as const, label: "Posts", icon: Article },
         { id: "pages" as const, label: "Pages", icon: Files },
+        { id: "quizzes" as const, label: "Quizzes", icon: Question },
       ],
     },
     {
@@ -1605,6 +1711,7 @@ function DashboardContent() {
                   onClick={() => {
                     setActiveSection(item.id);
                     setEditingItem(null);
+                    setEditingQuiz(null);
                   }}
                 >
                   <item.icon
@@ -1655,6 +1762,8 @@ function DashboardContent() {
             <h1 className="dashboard-title">
               {activeSection === "posts" && "Posts"}
               {activeSection === "pages" && "Pages"}
+              {activeSection === "quizzes" && "Quizzes"}
+              {activeSection === "quiz-editor" && "Edit Quiz"}
               {activeSection === "post-editor" && "Edit Post"}
               {activeSection === "page-editor" && "Edit Page"}
               {activeSection === "write-post" && "Write Post"}
@@ -1787,6 +1896,27 @@ function DashboardContent() {
               onEdit={handleEditPage}
               searchQuery={searchQuery}
               onDelete={handleDeletePage}
+            />
+          )}
+
+          {/* Quizzes List */}
+          {activeSection === "quizzes" && (
+            <QuizzesListView
+              onEdit={handleEditQuiz}
+              searchQuery={searchQuery}
+              onDelete={handleDeleteQuiz}
+              addToast={addToast}
+            />
+          )}
+
+          {/* Quiz Editor */}
+          {activeSection === "quiz-editor" && editingQuiz && (
+            <QuizEditor
+              quiz={editingQuiz}
+              posts={posts}
+              onBack={() => setActiveSection("quizzes")}
+              onSave={handleSaveQuiz}
+              addToast={addToast}
             />
           )}
 
@@ -2283,6 +2413,506 @@ function PagesListView({
           </button>
         </div>
       )}
+    </div>
+  );
+}
+
+// Quizzes List View Component
+function QuizzesListView({
+  onEdit,
+  searchQuery,
+  onDelete,
+  addToast,
+}: {
+  onEdit: (quiz: QuizItem) => void;
+  searchQuery: string;
+  onDelete: (quiz: QuizItem) => void;
+  addToast: (message: string, type: ToastType) => void;
+}) {
+  const quizzes = useQuery(api.quiz.listAll);
+  const posts = useQuery(api.posts.listAll);
+  const [filter, setFilter] = useState<"all" | "published" | "draft">("all");
+  const [itemsPerPage, setItemsPerPage] = useState(15);
+  const [currentPage, setCurrentPage] = useState(0);
+
+  const filteredQuizzes = useMemo(() => {
+    if (!quizzes) return [];
+
+    let filtered = quizzes;
+    if (filter === "published") filtered = quizzes.filter((q) => q.published);
+    if (filter === "draft") filtered = quizzes.filter((q) => !q.published);
+
+    // Apply search filter
+    if (searchQuery.trim()) {
+      const query = searchQuery.toLowerCase();
+      filtered = filtered.filter(
+        (q) =>
+          q.title.toLowerCase().includes(query) ||
+          q.postSlug.toLowerCase().includes(query),
+      );
+    }
+
+    return filtered;
+  }, [quizzes, filter, searchQuery]);
+
+  const paginatedQuizzes = useMemo(() => {
+    const start = currentPage * itemsPerPage;
+    return filteredQuizzes.slice(start, start + itemsPerPage);
+  }, [filteredQuizzes, currentPage, itemsPerPage]);
+
+  const totalPages = Math.ceil(filteredQuizzes.length / itemsPerPage);
+  const hasNextPage = currentPage < totalPages - 1;
+
+  const handleFirstPage = () => {
+    setCurrentPage(0);
+  };
+
+  const handleNextPage = () => {
+    if (hasNextPage) {
+      setCurrentPage((prev) => prev + 1);
+    }
+  };
+
+  const handleFilterChange = (newFilter: "all" | "published" | "draft") => {
+    setFilter(newFilter);
+    setCurrentPage(0);
+  };
+
+  // Create a new quiz
+  const handleCreateQuiz = () => {
+    if (!posts || posts.length === 0) {
+      addToast("No posts found. Create a post first.", "error");
+      return;
+    }
+    // Create a new empty quiz with the first post's slug
+    const newQuiz: QuizItem = {
+      postSlug: posts[0].slug,
+      title: "New Quiz",
+      description: "",
+      questions: [],
+      published: false,
+    };
+    onEdit(newQuiz);
+  };
+
+  return (
+    <div className="dashboard-list-view">
+      <div className="dashboard-list-header">
+        <div className="dashboard-filter-tabs">
+          <button
+            className={`dashboard-filter-tab ${filter === "all" ? "active" : ""}`}
+            onClick={() => handleFilterChange("all")}
+          >
+            All ({quizzes?.length || 0})
+          </button>
+          <button
+            className={`dashboard-filter-tab ${filter === "published" ? "active" : ""}`}
+            onClick={() => handleFilterChange("published")}
+          >
+            Published ({quizzes?.filter((q) => q.published).length || 0})
+          </button>
+          <button
+            className={`dashboard-filter-tab ${filter === "draft" ? "active" : ""}`}
+            onClick={() => handleFilterChange("draft")}
+          >
+            Drafts ({quizzes?.filter((q) => !q.published).length || 0})
+          </button>
+          <div className="dashboard-items-per-page">
+            <label htmlFor="quizzes-per-page" className="dashboard-items-label">
+              Show:
+            </label>
+            <select
+              id="quizzes-per-page"
+              value={itemsPerPage}
+              onChange={(e) => {
+                setItemsPerPage(Number(e.target.value));
+                setCurrentPage(0);
+              }}
+              className="dashboard-items-select"
+            >
+              <option value={15}>15</option>
+              <option value={25}>25</option>
+              <option value={50}>50</option>
+              <option value={100}>100</option>
+            </select>
+          </div>
+        </div>
+        <button className="dashboard-btn-primary" onClick={handleCreateQuiz}>
+          <Plus size={16} />
+          New Quiz
+        </button>
+      </div>
+
+      <div className="dashboard-list-table">
+        <div className="dashboard-list-table-header">
+          <span className="col-title">Title</span>
+          <span className="col-post">Post</span>
+          <span className="col-questions">Questions</span>
+          <span className="col-status">Status</span>
+          <span className="col-actions">Actions</span>
+        </div>
+
+        {!quizzes || quizzes.length === 0 ? (
+          <div className="dashboard-list-empty">
+            No quizzes found. Create one to get started.
+          </div>
+        ) : filteredQuizzes.length === 0 ? (
+          <div className="dashboard-list-empty">
+            {searchQuery ? "No quizzes match your search" : "No quizzes found"}
+          </div>
+        ) : (
+          paginatedQuizzes.map((quiz) => (
+            <div key={quiz._id} className="dashboard-list-row">
+              <div className="col-title">
+                <span className="post-title">{quiz.title}</span>
+              </div>
+              <div className="col-post">
+                <span className="post-slug">/{quiz.postSlug}</span>
+              </div>
+              <div className="col-questions">
+                <span>{quiz.questionCount} questions</span>
+              </div>
+              <div className="col-status">
+                <span
+                  className={`status-badge ${quiz.published ? "published" : "draft"}`}
+                >
+                  {quiz.published ? "Published" : "Draft"}
+                </span>
+              </div>
+              <div className="col-actions">
+                <button
+                  className="action-btn edit"
+                  onClick={() =>
+                    onEdit({
+                      _id: quiz._id,
+                      postSlug: quiz.postSlug,
+                      title: quiz.title,
+                      description: quiz.description,
+                      questions: [], // Will be fetched when editing
+                      published: quiz.published,
+                    })
+                  }
+                  title="Edit"
+                >
+                  <PencilSimple size={16} />
+                </button>
+                <Link
+                  to={`/${quiz.postSlug}`}
+                  className="action-btn view"
+                  title="View Post"
+                  target="_blank"
+                >
+                  <Eye size={16} />
+                </Link>
+                <button
+                  className="action-btn delete"
+                  onClick={() =>
+                    onDelete({
+                      _id: quiz._id,
+                      postSlug: quiz.postSlug,
+                      title: quiz.title,
+                      description: quiz.description,
+                      questions: [],
+                      published: quiz.published,
+                    })
+                  }
+                  title="Delete"
+                >
+                  <Trash size={16} />
+                </button>
+              </div>
+            </div>
+          ))
+        )}
+      </div>
+
+      {/* Pagination */}
+      {filteredQuizzes.length > itemsPerPage && (
+        <div className="dashboard-pagination">
+          <button
+            onClick={handleFirstPage}
+            disabled={currentPage === 0}
+            className="dashboard-pagination-btn"
+          >
+            <CaretLeft size={16} />
+            First
+          </button>
+          <button
+            onClick={handleNextPage}
+            disabled={!hasNextPage}
+            className="dashboard-pagination-btn"
+          >
+            Next
+            <CaretRight size={16} />
+          </button>
+        </div>
+      )}
+    </div>
+  );
+}
+
+// Quiz Editor Component
+function QuizEditor({
+  quiz,
+  posts,
+  onBack,
+  onSave,
+  addToast,
+}: {
+  quiz: QuizItem;
+  posts: ContentItem[] | undefined;
+  onBack: () => void;
+  onSave: (quiz: QuizItem) => Promise<void>;
+  addToast: (message: string, type: ToastType) => void;
+}) {
+  const [editedQuiz, setEditedQuiz] = useState<QuizItem>(quiz);
+  const [isSaving, setIsSaving] = useState(false);
+
+  // Fetch the full quiz with questions if editing existing quiz
+  // Note: For new quizzes without _id, we don't need to fetch
+  const fullQuiz = useQuery(api.quiz.getQuizById, quiz._id ? { quizId: quiz._id } : "skip");
+
+  // Update editedQuiz when full quiz data is loaded
+  useEffect(() => {
+    if (fullQuiz && quiz._id) {
+      setEditedQuiz({
+        _id: quiz._id,
+        postSlug: fullQuiz.postSlug,
+        title: fullQuiz.title,
+        description: fullQuiz.description,
+        questions: fullQuiz.questions,
+        published: true, // getQuizById only returns published quizzes
+      });
+    }
+  }, [fullQuiz, quiz._id]);
+
+  const handleSave = async () => {
+    if (!editedQuiz.postSlug) {
+      addToast("Please select a post", "error");
+      return;
+    }
+    if (!editedQuiz.title.trim()) {
+      addToast("Please enter a title", "error");
+      return;
+    }
+    if (editedQuiz.questions.length === 0) {
+      addToast("Please add at least one question", "error");
+      return;
+    }
+
+    setIsSaving(true);
+    try {
+      await onSave(editedQuiz);
+    } finally {
+      setIsSaving(false);
+    }
+  };
+
+  const addQuestion = () => {
+    const newQuestion: QuizQuestion = {
+      id: `q-${Date.now()}`,
+      question: "",
+      options: ["", "", "", ""],
+      correctAnswer: 0,
+      explanation: "",
+    };
+    setEditedQuiz({
+      ...editedQuiz,
+      questions: [...editedQuiz.questions, newQuestion],
+    });
+  };
+
+  const updateQuestion = (index: number, updates: Partial<QuizQuestion>) => {
+    const newQuestions = [...editedQuiz.questions];
+    newQuestions[index] = { ...newQuestions[index], ...updates };
+    setEditedQuiz({ ...editedQuiz, questions: newQuestions });
+  };
+
+  const deleteQuestion = (index: number) => {
+    const newQuestions = editedQuiz.questions.filter((_, i) => i !== index);
+    setEditedQuiz({ ...editedQuiz, questions: newQuestions });
+  };
+
+  return (
+    <div className="dashboard-editor-view">
+      <div className="dashboard-editor-header">
+        <button className="dashboard-back-btn" onClick={onBack}>
+          <ArrowLeft size={16} />
+          Back to Quizzes
+        </button>
+        <div className="dashboard-editor-actions">
+          <button
+            className="dashboard-btn-secondary"
+            onClick={handleSave}
+            disabled={isSaving}
+          >
+            {isSaving ? (
+              <>
+                <SpinnerGap size={16} className="animate-spin" />
+                Saving...
+              </>
+            ) : (
+              <>
+                <FloppyDisk size={16} />
+                Save Quiz
+              </>
+            )}
+          </button>
+        </div>
+      </div>
+
+      <div className="dashboard-editor-content">
+        <div className="dashboard-editor-main">
+          <div className="dashboard-field-group">
+            <label htmlFor="quiz-post">Post</label>
+            <select
+              id="quiz-post"
+              value={editedQuiz.postSlug}
+              onChange={(e) =>
+                setEditedQuiz({ ...editedQuiz, postSlug: e.target.value })
+              }
+              className="dashboard-field-input"
+            >
+              {posts?.map((post) => (
+                <option key={post.slug} value={post.slug}>
+                  {post.title}
+                </option>
+              ))}
+            </select>
+          </div>
+
+          <div className="dashboard-field-group">
+            <label htmlFor="quiz-title">Title</label>
+            <input
+              id="quiz-title"
+              type="text"
+              value={editedQuiz.title}
+              onChange={(e) =>
+                setEditedQuiz({ ...editedQuiz, title: e.target.value })
+              }
+              className="dashboard-field-input"
+              placeholder="Quiz: Understanding Post Title"
+            />
+          </div>
+
+          <div className="dashboard-field-group">
+            <label htmlFor="quiz-description">Description</label>
+            <textarea
+              id="quiz-description"
+              value={editedQuiz.description || ""}
+              onChange={(e) =>
+                setEditedQuiz({ ...editedQuiz, description: e.target.value })
+              }
+              className="dashboard-field-textarea"
+              rows={3}
+              placeholder="Brief description of what this quiz covers..."
+            />
+          </div>
+
+          <div className="dashboard-field-group">
+            <label className="dashboard-checkbox-label">
+              <input
+                type="checkbox"
+                checked={editedQuiz.published}
+                onChange={(e) =>
+                  setEditedQuiz({ ...editedQuiz, published: e.target.checked })
+                }
+              />
+              <span>Published</span>
+            </label>
+          </div>
+
+          <div className="dashboard-quiz-questions">
+            <div className="dashboard-questions-header">
+              <h3>Questions</h3>
+              <button className="dashboard-btn-secondary" onClick={addQuestion}>
+                <Plus size={16} />
+                Add Question
+              </button>
+            </div>
+
+            {editedQuiz.questions.length === 0 ? (
+              <div className="dashboard-questions-empty">
+                No questions yet. Click "Add Question" to create one.
+              </div>
+            ) : (
+              editedQuiz.questions.map((question, index) => (
+                <div key={question.id} className="dashboard-question-card">
+                  <div className="dashboard-question-header">
+                    <span className="dashboard-question-number">
+                      Question {index + 1}
+                    </span>
+                    <button
+                      className="dashboard-btn-icon danger"
+                      onClick={() => deleteQuestion(index)}
+                      title="Delete question"
+                    >
+                      <Trash size={16} />
+                    </button>
+                  </div>
+
+                  <div className="dashboard-field-group">
+                    <label>Question</label>
+                    <input
+                      type="text"
+                      value={question.question}
+                      onChange={(e) =>
+                        updateQuestion(index, { question: e.target.value })
+                      }
+                      className="dashboard-field-input"
+                      placeholder="Enter your question..."
+                    />
+                  </div>
+
+                  <div className="dashboard-field-group">
+                    <label>Options</label>
+                    {question.options.map((option, optIndex) => (
+                      <div key={optIndex} className="dashboard-option-row">
+                        <span className="dashboard-option-label">
+                          {String.fromCharCode(65 + optIndex)})
+                        </span>
+                        <input
+                          type="text"
+                          value={option}
+                          onChange={(e) => {
+                            const newOptions = [...question.options];
+                            newOptions[optIndex] = e.target.value;
+                            updateQuestion(index, { options: newOptions });
+                          }}
+                          className="dashboard-field-input"
+                          placeholder={`Option ${String.fromCharCode(65 + optIndex)}`}
+                        />
+                        <input
+                          type="radio"
+                          name={`correct-${question.id}`}
+                          checked={question.correctAnswer === optIndex}
+                          onChange={() =>
+                            updateQuestion(index, { correctAnswer: optIndex })
+                          }
+                          title="Mark as correct answer"
+                        />
+                      </div>
+                    ))}
+                  </div>
+
+                  <div className="dashboard-field-group">
+                    <label>Explanation (optional)</label>
+                    <textarea
+                      value={question.explanation || ""}
+                      onChange={(e) =>
+                        updateQuestion(index, { explanation: e.target.value })
+                      }
+                      className="dashboard-field-textarea"
+                      rows={2}
+                      placeholder="Explain why the correct answer is right..."
+                    />
+                  </div>
+                </div>
+              ))
+            )}
+          </div>
+        </div>
+      </div>
     </div>
   );
 }

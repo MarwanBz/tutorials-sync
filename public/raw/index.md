@@ -1,32 +1,19 @@
 # Homepage
 
-The open-source markdown publishing framework for developers and AI agents to ship **[docs](/docs)**, or **[blogs](/blog)** or **[websites](/)** that's always in sync.
+Master frontend development through in-depth tutorials, interactive quizzes, and spaced repetition.
 
-**[Fork it](https://github.com/waynesutton/markdown-site)** or [npm](https://www.npmjs.com/package/create-markdown-sync) **<span class="copy-command">npx create-markdown-sync my-site</span>**, customize it, ship it.
+Build real understanding of React, databases, HTTP, Express, Git, and React Query.
 
-<!-- This is a comments
-Your content is instantly available to browsers, LLMs, and AI
-agents. -->
+**[Start learning](/practice)** or browse the [tutorials](/blog).
 
-## Features
+## Why this platform?
 
-**AI agent integration** — API endpoints, raw markdown files, skills.md and MCP server included.
+Reading tutorials isn't enough to truly master a concept. This platform combines:
 
-**File-based publishing** — Write markdown locally, content syncs everywhere with version control.
-
-**URL content import** — Import urls to scrape any webpage into markdown with Firecrawl.
-
-**Newsletter automation** — Built-in subscription forms and admin dashboard powered by AgentMail.
-
-**Multiple output formats** — JSON via API endpoints, raw .md files, and RSS feeds.
-
-**Real-time team sync** — Multiple developers run npm run sync from different machines.
-
-**Sync Commands** - Sync discovery commands to update AGENTS.md, CLAUDE.md, and llms.txt
-
-**Semantic search** - Find content by meaning, not just keywords.
-
-**Ask AI** - Chat with your site content. Get answers with sources.
+- **Tutorials** that go deep into the "why" behind decisions
+- **Quizzes** to test your understanding with active recall
+- **Progress tracking** to see your improvement over time
+- **Spaced repetition** to review and reinforce what you've learned
 
 ---
 
@@ -53,13 +40,13 @@ agents. -->
 - **[React Rendering & Mental Models](/raw/2025-12-27-react-rendering-&-mental-models.md)** - Understanding how React decides what to re-render, why components update unexpectedly, and how to think about rendering like a senior engineer.
   - Date: 2025-12-27 | Reading time: 8 min read | Tags: React Rendering, Reconciliation, Memoization, React Mental Model
 
-## Pages (17)
+## Pages (18)
 
 - **[Footer](/raw/footer.md)**
 - **[Home Intro](/raw/home-intro.md)**
 - **[Documentation](/raw/documentation.md)**
 - **[Dashboard](/raw/docs-dashboard.md)**
-- **[About](/raw/about.md)** - An open-source publishing framework built for AI agents and developers to ship websites, docs, or blogs.
+- **[About](/raw/about.md)** - Personal learning platform for mastering frontend development through tutorials, quizzes, and spaced repetition.
 - **[Ask AI](/raw/docs-ask-ai.md)**
 - **[Content](/raw/docs-content.md)**
 - **[Search](/raw/docs-search.md)**
@@ -71,11 +58,12 @@ agents. -->
 - **[Changelog](/raw/changelog.md)**
 - **[Deployment](/raw/docs-deployment.md)**
 - **[Newsletter](/raw/newsletter.md)**
+- **[Home Intro](/raw/home-intro.md)**
 - **[Media Upload Setup](/raw/docs-media-setup.md)**
 
 ---
 
-**Total Content:** 10 posts, 17 pages
+**Total Content:** 10 posts, 18 pages
 
 All content is available as raw markdown files at `/raw/{slug}.md`
 

@@ -44,3 +44,4 @@ prds/metadataforsubs.md
 prds/addchattoapp.md
 plans/.last-branch
 .vercel
+.env*.local
