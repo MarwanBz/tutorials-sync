@@ -448,7 +448,7 @@ export const siteConfig: SiteConfig = {
   // viewMode: 'list' shows bullet list, 'cards' shows card grid with excerpts
   featuredViewMode: "cards",
   // Featured section title (e.g., "Get started:", "Featured", "Popular")
-  featuredTitle: "Get started:",
+  featuredTitle: "Explore:",
   // Allow users to toggle between list and card views
   showViewToggle: true,
 

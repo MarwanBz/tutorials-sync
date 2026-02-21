@@ -1,0 +1,43 @@
+{
+  "postSlug": "react-query-mutations-best-practices",
+  "title": "React Query Mutations Quiz",
+  "description": "Test your understanding of React Query mutations and best practices",
+  "questions": [
+    {
+      "correctAnswer": 1,
+      "explanation": "useMutation is designed for server mutations - operations that modify data on the server like POST, PUT, DELETE requests.",
+      "id": "q1",
+      "options": [
+        "Fetching data from a server",
+        "Updating data on the server",
+        "Caching responses",
+        "Validating user input"
+      ],
+      "question": "What is the primary purpose of useMutation in React Query?"
+    },
+    {
+      "correctAnswer": 1,
+      "explanation": "useQuery is used for data fetching, while useMutation is for server mutations that modify data.",
+      "id": "q2",
+      "options": [
+        "useMutation",
+        "useQuery",
+        "useInfiniteQuery",
+        "useIsFetching"
+      ],
+      "question": "Which hook would you use to fetch data on component mount?"
+    },
+    {
+      "correctAnswer": 1,
+      "explanation": "invalidateQueries marks affected queries as stale, causing them to refetch fresh data from the server.",
+      "id": "q3",
+      "options": [
+        "Deletes all cached data",
+        "Marks queries as stale to trigger refetch",
+        "Prevents future queries",
+        "Clears the mutation cache"
+      ],
+      "question": "What does the invalidateQueries helper do after a mutation?"
+    }
+  ]
+}

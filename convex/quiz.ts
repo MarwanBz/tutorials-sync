@@ -10,6 +10,78 @@ const questionValidator = v.object({
   explanation: v.optional(v.string()),
 });
 
+// Get all quizzes (published and unpublished) for dashboard admin view
+export const listAll = query({
+  args: {},
+  returns: v.array(
+    v.object({
+      _id: v.id("quizzes"),
+      postSlug: v.string(),
+      title: v.string(),
+      description: v.optional(v.string()),
+      questionCount: v.number(),
+      published: v.boolean(),
+      createdAt: v.number(),
+      updatedAt: v.number(),
+    })
+  ),
+  handler: async (ctx) => {
+    const quizzes = await ctx.db.query("quizzes").collect();
+
+    // Sort by updatedAt descending (most recently updated first)
+    const sortedQuizzes = quizzes.sort(
+      (a, b) => b.updatedAt - a.updatedAt
+    );
+
+    return sortedQuizzes.map((quiz) => ({
+      _id: quiz._id,
+      postSlug: quiz.postSlug,
+      title: quiz.title,
+      description: quiz.description,
+      questionCount: quiz.questions.length,
+      published: quiz.published,
+      createdAt: quiz.createdAt,
+      updatedAt: quiz.updatedAt,
+    }));
+  },
+});
+
+// Get all quizzes with full question data (for export)
+// Returns complete quiz objects including questions
+export const listAllWithQuestions = query({
+  args: {},
+  returns: v.array(
+    v.object({
+      _id: v.id("quizzes"),
+      postSlug: v.string(),
+      title: v.string(),
+      description: v.optional(v.string()),
+      questions: v.array(questionValidator),
+      published: v.boolean(),
+      createdAt: v.number(),
+      updatedAt: v.number(),
+    })
+  ),
+  handler: async (ctx) => {
+    const quizzes = await ctx.db.query("quizzes").collect();
+
+    // Sort by updatedAt descending (most recently updated first)
+    const sortedQuizzes = quizzes.sort((a, b) => b.updatedAt - a.updatedAt);
+
+    // Explicitly map fields to exclude system fields like _creationTime
+    return sortedQuizzes.map((quiz) => ({
+      _id: quiz._id,
+      postSlug: quiz.postSlug,
+      title: quiz.title,
+      description: quiz.description,
+      questions: quiz.questions,
+      published: quiz.published,
+      createdAt: quiz.createdAt,
+      updatedAt: quiz.updatedAt,
+    }));
+  },
+});
+
 // Answer type for submissions
 const answerValidator = v.object({
   questionId: v.string(),

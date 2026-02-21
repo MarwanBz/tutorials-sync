@@ -1,0 +1,91 @@
+{
+  "postSlug": "2026-01-10-react-query-mutations-best-practices",
+  "title": "Quiz: React Query Mutations: Modern Best Practices",
+  "description": "Test your understanding of React Query Mutations: Modern Best Practices",
+  "questions": [
+    {
+      "correctAnswer": 1,
+      "explanation": "Centralized error handling using `onError` in the hook or a global `MutationCache` is preferred. This removes the need for scattered try/catch blocks and keeps error logic in one place.",
+      "id": "q-1771560037011-0",
+      "options": [
+        "By wrapping the mutation call in a try/catch block within the component.",
+        "By adding an `onError` callback inside the `useMutation` hook definition or using a global `MutationCache`.",
+        "By using `mutateAsync` and catching the returned Promise rejection.",
+        "By relying on React Query's default retry logic without any specific error handlers."
+      ],
+      "question": "According to modern best practices for React Query (TkDodo's approach), how should error handling typically be managed for mutations?"
+    },
+    {
+      "correctAnswer": 0,
+      "explanation": "`mutateAsync` returns a Promise, which is necessary if you need to wait for the result to execute another async operation (e.g., chaining mutations). `mutate()` is preferred for standard fire-and-forget scenarios.",
+      "id": "q-1771560037011-1",
+      "options": [
+        "When you need to chain multiple asynchronous operations together after the mutation completes.",
+        "When you want to trigger a toast notification on success.",
+        "When you need to invalidate the query cache after a mutation.",
+        "When you want to ensure the component handles loading states automatically."
+      ],
+      "question": "When distinguishing between `mutate()` and `mutateAsync()`, which scenario requires the use of `mutateAsync()`?"
+    },
+    {
+      "correctAnswer": 2,
+      "explanation": "Preferring `invalidateQueries` ensures that the frontend syncs with the backend. Direct updates (`setQueryData`) require duplicating backend logic (like sorting or filtering) on the frontend, which can lead to inconsistencies.",
+      "id": "q-1771560037011-2",
+      "options": [
+        "`invalidateQueries` is faster and consumes less memory than `setQueryData`.",
+        "`setQueryData` does not trigger a re-render of the components using the data.",
+        "`invalidateQueries` refetches data from the server, ensuring the backend remains the source of truth and avoiding logic duplication.",
+        "`setQueryData` cannot be used inside the `onSuccess` callback of a mutation."
+      ],
+      "question": "Why is it generally recommended to use `invalidateQueries` instead of `setQueryData` for updating cache data after a mutation?"
+    },
+    {
+      "correctAnswer": 0,
+      "explanation": "Separation of concerns is key. Hook-level callbacks (for cache invalidation) run even if the component unmounts, while component-level callbacks (for redirects/toasts) depend on the component still being mounted.",
+      "id": "q-1771560037011-3",
+      "options": [
+        "`useMutation` callbacks run before `mutate` callbacks; `useMutation` is for cache logic (always runs), while `mutate` callbacks are for UI logic (might not run if component unmounts).",
+        "There is no difference; they are interchangeable and execute simultaneously.",
+        "`mutate` callbacks are the only place where you can access the returned data.",
+        "`useMutation` callbacks only run if the mutation fails, whereas `mutate` callbacks only run on success."
+      ],
+      "question": "In the context of React Query mutations, what is the primary difference between callbacks defined in `useMutation` versus callbacks passed to the `mutate(variables, callbacks)` function?"
+    },
+    {
+      "correctAnswer": 2,
+      "explanation": "Optimistic updates add complexity. They should be avoided for form submissions (which often redirect) or operations that fail frequently, as handling the rollback logic in these scenarios can be difficult and degrade UX.",
+      "id": "q-1771560037011-4",
+      "options": [
+        "When you want to improve the perceived performance of the application.",
+        "When dealing with actions that rarely fail, such as liking a post.",
+        "When dealing with form submissions that result in redirects, as rollbacks become complex and potentially buggy.",
+        "When the mutation requires invalidating related queries upon completion."
+      ],
+      "question": "According to the tutorial, when should you generally avoid implementing Optimistic Updates?"
+    },
+    {
+      "correctAnswer": 1,
+      "explanation": "As highlighted in TkDodo's guide, `mutate` is essentially `mutateAsync().catch(noop)`. This means you don't need try/catch blocks; React Query catches the error and passes it to your defined error handlers.",
+      "id": "q-1771560037011-5",
+      "options": [
+        "`mutate` throws an error that must be caught by a boundary immediately.",
+        "`mutate` internally calls `mutateAsync().catch(noop)`, meaning it suppresses the error promise and relies on `onError` callbacks for handling.",
+        "`mutate` automatically retries the mutation indefinitely until it succeeds.",
+        "`mutate` converts the error into a `null` return value."
+      ],
+      "question": "How does the `mutate` function handle errors internally compared to `mutateAsync`?"
+    },
+    {
+      "correctAnswer": 1,
+      "explanation": "Global handlers provide a single source of truth for error tracking and UI feedback, ensuring consistency across the application and reducing boilerplate in individual hooks.",
+      "id": "q-1771560037011-6",
+      "options": [
+        "It allows you to retry failed mutations automatically without any configuration.",
+        "It centralizes error handling, allowing consistent logging (e.g., to Sentry) and user feedback (e.g., toasts) for every mutation in the app.",
+        "It prevents mutations from firing if the network is offline.",
+        "It automatically invalidates all queries in the cache whenever any mutation fails."
+      ],
+      "question": "What is the benefit of configuring a `MutationCache` with a global `onError` handler when creating the `QueryClient`?"
+    }
+  ]
+}

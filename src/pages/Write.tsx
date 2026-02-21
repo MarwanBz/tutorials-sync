@@ -13,6 +13,7 @@ import {
   ArrowsOut,
   ArrowsIn,
   SidebarSimple,
+  SignIn,
 } from "@phosphor-icons/react";
 import { Moon, Sun, Cloud } from "lucide-react";
 import { Half2Icon } from "@radix-ui/react-icons";
@@ -20,6 +21,13 @@ import { useTheme } from "../context/ThemeContext";
 import { useFont } from "../context/FontContext";
 import AIChatView from "../components/AIChatView";
 import siteConfig from "../config/siteConfig";
+import { isWorkOSConfigured } from "../utils/workos";
+import {
+  Authenticated as ConvexAuthenticated,
+  Unauthenticated as ConvexUnauthenticated,
+  AuthLoading as ConvexAuthLoading,
+} from "convex/react";
+import { useAuth as useWorkOSAuth } from "@workos-inc/authkit-react";
 
 // Frontmatter field definitions for blog posts
 const POST_FIELDS = [
@@ -202,7 +210,54 @@ function getThemeIcon(theme: string) {
   }
 }
 
-export default function Write() {
+// Conditionally use auth components based on WorkOS configuration
+const Authenticated: React.ComponentType<{ children: React.ReactNode }> =
+  isWorkOSConfigured ? ConvexAuthenticated : ({ children }) => <>{children}</>;
+
+const Unauthenticated: React.ComponentType<{ children: React.ReactNode }> =
+  isWorkOSConfigured ? ConvexUnauthenticated : () => null;
+
+const AuthLoading: React.ComponentType<{ children: React.ReactNode }> =
+  isWorkOSConfigured ? ConvexAuthLoading : () => null;
+
+// Login prompt component for unauthenticated users
+function LoginPromptInner() {
+  // When WorkOS is configured, use the real hook
+  // eslint-disable-next-line react-hooks/rules-of-hooks
+  const { signIn } = isWorkOSConfigured ? useWorkOSAuth() : { signIn: () => {} };
+
+  return (
+    <div className="write-login-prompt">
+      <div className="write-login-content">
+        <div className="write-login-icon">
+          <SignIn size={48} weight="regular" />
+        </div>
+        <h1>Sign In Required</h1>
+        <p>You need to sign in to access the Write page.</p>
+        <button onClick={() => signIn()} className="write-login-button">
+          <SignIn size={18} weight="regular" />
+          <span>Sign In</span>
+        </button>
+        <Link to="/" className="write-login-back">
+          <House size={16} weight="regular" />
+          <span>Back to Home</span>
+        </Link>
+      </div>
+    </div>
+  );
+}
+
+// Wrapper that only renders LoginPromptInner when unauthenticated
+function LoginPrompt() {
+  return (
+    <Unauthenticated>
+      <LoginPromptInner />
+    </Unauthenticated>
+  );
+}
+
+// Main Write component (renamed from Write to WriteContent)
+function WriteContent() {
   const { theme, toggleTheme } = useTheme();
   const { fontFamily: globalFont } = useFont();
   const [contentType, setContentType] = useState<"post" | "page">("post");
@@ -658,5 +713,22 @@ export default function Write() {
         </div>
       </aside>
     </div>
+  );
+}
+
+// Main export with auth wrapper
+export default function Write() {
+  return (
+    <>
+      <Authenticated>
+        <WriteContent />
+      </Authenticated>
+      <Unauthenticated>
+        <LoginPrompt />
+      </Unauthenticated>
+      <AuthLoading>
+        <div className="write-loading">Loading...</div>
+      </AuthLoading>
+    </>
   );
 }
