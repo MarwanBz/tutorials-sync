@@ -2,7 +2,7 @@
 
 ---
 Type: page
-Date: 2026-02-20
+Date: 2026-02-21
 ---
 
 Tutorials Sync is a personal learning platform for capturing insights from AI conversations and turning them into lasting knowledge.

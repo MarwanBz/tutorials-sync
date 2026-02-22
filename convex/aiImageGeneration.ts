@@ -20,8 +20,8 @@ import { GoogleGenAI } from "@google/genai";
 
 // Image model validator
 const imageModelValidator = v.union(
-  v.literal("gemini-2.0-flash-exp-image-generation"),
-  v.literal("imagen-3.0-generate-002")
+  v.literal("gemini-2.5-flash-image"),
+  v.literal("gemini-3-pro-image-preview")
 );
 
 // Aspect ratio validator
@@ -74,57 +74,37 @@ export const generateImage = action({
       let imageBytes: Uint8Array;
       let mimeType = "image/png";
 
-      if (args.model === "gemini-2.0-flash-exp-image-generation") {
-        // Gemini Flash experimental image generation
-        const response = await ai.models.generateContent({
-          model: args.model,
-          contents: [{ role: "user", parts: [{ text: args.prompt }] }],
-          config: {
-            responseModalities: ["image", "text"],
-          },
-        });
+      // Both new Gemini models use the same generateContent API pattern
+      const response = await ai.models.generateContent({
+        model: args.model,
+        contents: [{ role: "user", parts: [{ text: args.prompt }] }],
+        config: {
+          responseModalities: ["image", "text"],
+          ...(args.aspectRatio && args.model === "gemini-3-pro-image-preview"
+            ? { aspectRatio: args.aspectRatio }
+            : {}),
+        },
+      });
 
-        // Extract image from response
-        const parts = response.candidates?.[0]?.content?.parts;
-        const imagePart = parts?.find(
-          (part) => {
-            const inlineData = part.inlineData as { mimeType?: string; data?: string } | undefined;
-            return inlineData?.mimeType?.startsWith("image/");
-          }
-        );
-
-        const inlineData = imagePart?.inlineData as { mimeType?: string; data?: string } | undefined;
-        if (!imagePart || !inlineData || !inlineData.mimeType || !inlineData.data) {
-          return {
-            success: false,
-            error: "No image was generated. Try a different prompt.",
-          };
+      // Extract image from response
+      const parts = response.candidates?.[0]?.content?.parts;
+      const imagePart = parts?.find(
+        (part) => {
+          const inlineData = part.inlineData as { mimeType?: string; data?: string } | undefined;
+          return inlineData?.mimeType?.startsWith("image/");
         }
+      );
 
-        mimeType = inlineData.mimeType;
-        imageBytes = base64ToBytes(inlineData.data);
-      } else {
-        // Imagen 3.0 model
-        const response = await ai.models.generateImages({
-          model: args.model,
-          prompt: args.prompt,
-          config: {
-            numberOfImages: 1,
-            aspectRatio: args.aspectRatio || "1:1",
-          },
-        });
-
-        const image = response.generatedImages?.[0];
-        if (!image || !image.image?.imageBytes) {
-          return {
-            success: false,
-            error: "No image was generated. Try a different prompt.",
-          };
-        }
-
-        mimeType = "image/png";
-        imageBytes = base64ToBytes(image.image.imageBytes);
+      const inlineData = imagePart?.inlineData as { mimeType?: string; data?: string } | undefined;
+      if (!imagePart || !inlineData || !inlineData.mimeType || !inlineData.data) {
+        return {
+          success: false,
+          error: "No image was generated. Try a different prompt.",
+        };
       }
+
+      mimeType = inlineData.mimeType;
+      imageBytes = base64ToBytes(inlineData.data);
 
       // Store the image in Convex storage
       const blob = new Blob([imageBytes as BlobPart], { type: mimeType });

@@ -4254,10 +4254,10 @@ published: false
 function AIAgentSection() {
   const [activeTab, setActiveTab] = useState<"chat" | "image">("chat");
   const [selectedTextModel, setSelectedTextModel] = useState(
-    siteConfig.aiDashboard?.defaultTextModel || "claude-sonnet-4-20250514"
+    siteConfig.aiDashboard?.defaultTextModel || "gemini-3-flash-preview"
   );
   const [selectedImageModel, setSelectedImageModel] = useState(
-    siteConfig.aiDashboard?.imageModels?.[0]?.id || "gemini-2.0-flash-exp-image-generation"
+    siteConfig.aiDashboard?.imageModels?.[0]?.id || "gemini-2.5-flash-image"
   );
   const [aspectRatio, setAspectRatio] = useState<"1:1" | "16:9" | "9:16" | "4:3" | "3:4">("1:1");
   const [imagePrompt, setImagePrompt] = useState("");
@@ -4274,10 +4274,10 @@ function AIAgentSection() {
   const deleteGeneratedImage = useMutation(api.aiChats.deleteGeneratedImage);
 
   const textModels = siteConfig.aiDashboard?.textModels || [
-    { id: "claude-sonnet-4-20250514", name: "Claude Sonnet 4", provider: "anthropic" as const },
+    { id: "gemini-3-flash-preview", name: "Gemini 3 Flash", provider: "google" as const },
   ];
   const imageModels = siteConfig.aiDashboard?.imageModels || [
-    { id: "gemini-2.0-flash-exp-image-generation", name: "Nano Banana", provider: "google" as const },
+    { id: "gemini-2.5-flash-image", name: "Nano Banana", provider: "google" as const },
   ];
 
   const enableImageGeneration = siteConfig.aiDashboard?.enableImageGeneration ?? true;
@@ -4293,7 +4293,7 @@ function AIAgentSection() {
       const result = await generateImage({
         sessionId: localStorage.getItem("ai_chat_session_id") || crypto.randomUUID(),
         prompt: imagePrompt,
-        model: selectedImageModel as "gemini-2.0-flash-exp-image-generation" | "imagen-3.0-generate-002",
+        model: selectedImageModel as "gemini-2.5-flash-image" | "gemini-3-pro-image-preview",
         aspectRatio,
       });
 
