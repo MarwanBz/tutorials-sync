@@ -162,7 +162,7 @@ Note: correctAnswer is a 0-based index (0 = first option, 1 = second, etc.)`;
     console.log("Generating quiz questions with AI...\n");
 
     const response = await anthropic.messages.create({
-      model: siteConfig.aiDashboard?.defaultTextModel ?? "claude-sonnet-4-20250514",
+      model: siteConfig.aiDashboard?.defaultTextModel ?? "gemini-3-flash-preview",
       max_tokens: 4000,
       messages: [
         {

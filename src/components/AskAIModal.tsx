@@ -128,7 +128,7 @@ export default function AskAIModal({ isOpen, onClose }: AskAIModalProps) {
   const [inputValue, setInputValue] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [selectedModel, setSelectedModel] = useState(
-    siteConfig.askAI?.defaultModel || "claude-sonnet-4-20250514"
+    siteConfig.askAI?.defaultModel || "gemini-3-flash-preview"
   );
   const [drivenIds, setDrivenIds] = useState<Set<string>>(new Set());
   const [copiedId, setCopiedId] = useState<string | null>(null);

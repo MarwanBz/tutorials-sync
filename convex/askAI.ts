@@ -21,7 +21,7 @@ export const createSession = mutation({
     const sessionId = await ctx.db.insert("askAISessions", {
       question,
       streamId,
-      model: model || "claude-sonnet-4-20250514",
+      model: model || "gemini-3-flash-preview",
       createdAt: Date.now(),
     });
     return { sessionId, streamId };

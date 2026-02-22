@@ -126,9 +126,9 @@ export interface AIChatConfig {
 
 // AI Model configuration for Dashboard multi-model support
 export interface AIModelOption {
-  id: string; // Model identifier (e.g., "claude-sonnet-4-20250514", "gpt-4o")
-  name: string; // Display name (e.g., "Claude Sonnet 4", "GPT-4o")
-  provider: "anthropic" | "openai" | "google"; // Provider for the model
+  id: string; // Model identifier (e.g., "gemini-3-flash-preview", "gemini-3-pro-preview")
+  name: string; // Display name (e.g., "Gemini 3 Flash", "Gemini 3 Pro")
+  provider: "google"; // Provider for the model
 }
 
 // AI Dashboard configuration
@@ -779,37 +779,30 @@ export const siteConfig: SiteConfig = {
   // AI Dashboard configuration
   // Multi-model AI chat and image generation in the Dashboard
   // Requires API keys in Convex environment variables:
-  // - ANTHROPIC_API_KEY for Claude models
-  // - OPENAI_API_KEY for OpenAI models
   // - GOOGLE_AI_API_KEY for Gemini models (chat and image generation)
   aiDashboard: {
     enableImageGeneration: true, // Enable image generation tab
-    defaultTextModel: "claude-sonnet-4-20250514", // Default model for text chat
+    defaultTextModel: "gemini-3-flash-preview", // Default model for text chat
     textModels: [
       {
-        id: "claude-sonnet-4-20250514",
-        name: "Claude Sonnet 4",
-        provider: "anthropic",
+        id: "gemini-3-flash-preview",
+        name: "Gemini 3 Flash",
+        provider: "google",
       },
       {
-        id: "gpt-4o",
-        name: "GPT-4o",
-        provider: "openai",
-      },
-      {
-        id: "gemini-2.0-flash",
-        name: "Gemini 2.0 Flash",
+        id: "gemini-3-pro-preview",
+        name: "Gemini 3 Pro",
         provider: "google",
       },
     ],
     imageModels: [
       {
-        id: "gemini-2.0-flash-exp-image-generation",
+        id: "gemini-2.5-flash-image",
         name: "Nano Banana",
         provider: "google",
       },
       {
-        id: "imagen-3.0-generate-002",
+        id: "gemini-3-pro-image-preview",
         name: "Nano Banana Pro",
         provider: "google",
       },
@@ -833,20 +826,20 @@ export const siteConfig: SiteConfig = {
 
   // Ask AI configuration (header chat for RAG-based Q&A)
   // Requires semanticSearch.enabled: true for content retrieval
-  // Requires OPENAI_API_KEY (for embeddings) and ANTHROPIC_API_KEY or OPENAI_API_KEY (for LLM)
+  // Requires OPENAI_API_KEY (for embeddings) and GOOGLE_AI_API_KEY (for LLM)
   askAI: {
     enabled: false, // Set to true to enable Ask AI header button
-    defaultModel: "claude-sonnet-4-20250514",
+    defaultModel: "gemini-3-flash-preview",
     models: [
       {
-        id: "claude-sonnet-4-20250514",
-        name: "Claude Sonnet 4",
-        provider: "anthropic",
+        id: "gemini-3-flash-preview",
+        name: "Gemini 3 Flash",
+        provider: "google",
       },
       {
-        id: "gpt-4o",
-        name: "GPT-4o",
-        provider: "openai",
+        id: "gemini-3-pro-preview",
+        name: "Gemini 3 Pro",
+        provider: "google",
       },
     ],
   },
