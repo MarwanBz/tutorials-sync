@@ -2,7 +2,7 @@
 
 ---
 Type: page
-Date: 2026-02-21
+Date: 2026-03-06
 ---
 
 A personal learning platform designed to help you master frontend development through tutorials, quizzes, and spaced repetition.

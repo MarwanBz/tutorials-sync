@@ -4270,6 +4270,16 @@ function AIAgentSection() {
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const [isDeletingImage, setIsDeletingImage] = useState(false);
 
+  // Topic chips state - for selecting posts to chat about
+  const posts = useQuery(api.posts.listAll);
+  const publishedPosts = posts?.filter((p) => p.published) || [];
+  const [selectedPostForChat, setSelectedPostForChat] = useState<{
+    slug: string;
+    title: string;
+    description?: string;
+    content?: string;
+  } | null>(null);
+
   const generateImage = useAction(api.aiImageGeneration.generateImage);
   const deleteGeneratedImage = useMutation(api.aiChats.deleteGeneratedImage);
 
@@ -4426,7 +4436,22 @@ function AIAgentSection() {
               )}
             </div>
           </div>
-          <AIChatView contextId="dashboard-agent" selectedModel={selectedTextModel} />
+          <AIChatView
+            contextId={selectedPostForChat ? `dashboard-post-${selectedPostForChat.slug}` : "dashboard-agent"}
+            pageContent={selectedPostForChat?.content}
+            postTitle={selectedPostForChat?.title}
+            postDescription={selectedPostForChat?.description}
+            postSlug={selectedPostForChat?.slug}
+            selectedModel={selectedTextModel}
+            availablePosts={publishedPosts.map((p) => ({
+              slug: p.slug,
+              title: p.title,
+              description: p.description,
+              content: p.content,
+            }))}
+            onPostSelect={(post) => setSelectedPostForChat(post)}
+            selectedPostSlug={selectedPostForChat?.slug}
+          />
         </div>
       )}
 

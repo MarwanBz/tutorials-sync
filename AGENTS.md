@@ -19,10 +19,10 @@ My coding tutorials with quizzes, progress tracking, and spaced repetition.. Wri
 - **Site Name**: Tutorials Sync
 - **Site Title**: Interactive Learning Platform
 - **Site URL**: https://tutorials-sync.netlify.app
-- **Total Posts**: 10
+- **Total Posts**: 11
 - **Total Pages**: 3
-- **Latest Post**: 2026-02-18
-- **Last Updated**: 2026-02-21T12:36:23.759Z
+- **Latest Post**: 2026-02-23
+- **Last Updated**: 2026-03-01T22:18:52.186Z
 
 ## Tech stack
 

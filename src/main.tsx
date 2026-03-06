@@ -5,6 +5,17 @@ import { ConvexReactClient, ConvexProvider } from "convex/react";
 import { ThemeProvider } from "./context/ThemeContext";
 import { FontProvider } from "./context/FontContext";
 import { isWorkOSConfigured } from "./utils/workos";
+
+// Typography
+import "@fontsource/outfit/400.css";
+import "@fontsource/outfit/500.css";
+import "@fontsource/outfit/600.css";
+import "@fontsource/outfit/700.css";
+import "@fontsource/nunito/400.css";
+import "@fontsource/nunito/500.css";
+import "@fontsource/nunito/600.css";
+import "@fontsource/nunito/700.css";
+
 import "./styles/global.css";
 
 // Disable browser scroll restoration to prevent scroll position being restored on navigation
