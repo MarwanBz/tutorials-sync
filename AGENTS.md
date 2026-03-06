@@ -22,7 +22,7 @@ My coding tutorials with quizzes, progress tracking, and spaced repetition.. Wri
 - **Total Posts**: 11
 - **Total Pages**: 3
 - **Latest Post**: 2026-02-23
-- **Last Updated**: 2026-03-01T22:18:52.186Z
+- **Last Updated**: 2026-03-06T19:30:19.190Z
 
 ## Tech stack
 
