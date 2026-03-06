@@ -17,8 +17,10 @@ Reading tutorials isn't enough to truly master a concept. This platform combines
 
 ---
 
-## Blog Posts (10)
+## Blog Posts (11)
 
+- **[Axios vs Fetch: The API Integration Decision Guide](/raw/2026-02-23-axios-vs-fetch-decision-guide.md)** - A practical guide to choosing between Axios and Fetch API for HTTP requests in React/Next.js applications. Real-world examples from basma-mobile and app-frontend projects.
+  - Date: 2026-02-23 | Reading time: 10 min read | Tags: HTTP, Axios, Fetch API, API Design, Interceptors, TanStack Query, Authentication, Error Handling
 - **[Memory Leaks in React TypeScript](/raw/2026-02-18-memory-leaks-debugging-react-typescript.md)** - Understanding memory leaks in React TypeScript applications - how they happen, how to debug them using Chrome DevTools, and how to fix them. Includes hands-on demo app.
   - Date: 2026-02-18 | Reading time: 11 min read | Tags: Memory Leaks, React useEffect Cleanup, Chrome DevTools, Heap Snapshots, Event Listeners, JavaScript Garbage Collection, Performance Debugging
 - **[TanStack Query v5: Complete Guide with Code Review](/raw/2026-01-31-tanstack-query-v5-complete-guide.md)** - Complete TanStack Query v5 guide - from query keys factory to advanced patterns. Code review of basma-mobile with actionable improvements.
@@ -63,12 +65,6 @@ Reading tutorials isn't enough to truly master a concept. This platform combines
 
 ---
 
-**Total Content:** 10 posts, 18 pages
+**Total Content:** 11 posts, 18 pages
 
 All content is available as raw markdown files at `/raw/{slug}.md`
-
----
-
-Built with [Convex](https://convex.dev) for real-time sync and deployed on [Vercel](https://vercel.com). View [real-time site stats](/stats).
-
-Created by [Marwan](https://www.marwanbaz.dev/) with Convex, Cursor, and Claude Opus 4.5. Follow on [GitHub](https://github.com/MarwanBz) and [LinkedIn](https://linkedin.com/in/marwanbz). This project is licensed under the MIT [License](https://github.com/MarwanBz/tutorials-sync?tab=MIT-1-ov-file).

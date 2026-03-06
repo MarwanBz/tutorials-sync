@@ -430,11 +430,11 @@ export interface SiteConfig {
 export const siteConfig: SiteConfig = {
   // Basic site info
   name: "Tutorials Sync",
-  title: "Interactive Learning Platform",
+  title: "Engineering Journal",
   // Optional logo/header image (place in public/images/, set to null to hide)
   logo: "/images/logo.svg",
   intro: null, // Set in Home.tsx to allow JSX with links
-  bio: `Personal learning platform for mastering frontend development through tutorials, quizzes, and spaced repetition.`,
+  bio: `Sharing engineering learnings, tutorials, and experiences in frontend development and beyond.`,
 
   // Font family configuration
   // Options: "serif" (New York), "sans" (system fonts), "monospace" (IBM Plex Mono)
@@ -448,7 +448,7 @@ export const siteConfig: SiteConfig = {
   // viewMode: 'list' shows bullet list, 'cards' shows card grid with excerpts
   featuredViewMode: "cards",
   // Featured section title (e.g., "Get started:", "Featured", "Popular")
-  featuredTitle: "Explore:",
+  featuredTitle: "Recent Notes:",
   // Allow users to toggle between list and card views
   showViewToggle: true,
 
@@ -529,8 +529,8 @@ export const siteConfig: SiteConfig = {
   blogPage: {
     enabled: true, // Enable the /blog route
     showInNav: true, // Show "Blog" link in navigation
-    title: "Tutorials", // Page title
-    description: "All tutorials, sorted by date.", // Optional description
+    title: "Learnings", // Page title
+    description: "Engineering notes, tutorials, and deep dives.", // Optional description
     order: 2, // Nav order (lower = first, e.g., 0 = first, 5 = after pages with order 0-4)
     viewMode: "cards", // Default view mode: "list" or "cards"
     showViewToggle: true, // Show toggle button to switch between list and card views

@@ -1,4 +1,4 @@
-import { useState, useRef, useEffect, useCallback } from "react";
+import { useState, useRef, useEffect, useCallback, useMemo } from "react";
 import { useQuery, useMutation, useAction } from "convex/react";
 import { api } from "../../convex/_generated/api";
 import type { Id } from "../../convex/_generated/dataModel";
@@ -28,12 +28,27 @@ function getSessionId(): string {
   return sessionId;
 }
 
+interface PostOption {
+  slug: string;
+  title: string;
+  description?: string;
+  content?: string;
+}
+
 interface AIChatViewProps {
   contextId: string; // Slug or "write-page"
   pageContent?: string; // Optional page content for context
   onClose?: () => void; // Optional close handler
   hideAttachments?: boolean; // Hide image/link attachment buttons (for right sidebar)
   selectedModel?: string; // Selected AI model ID (e.g., "gemini-3-flash-preview", "gemini-3-pro-preview")
+  // Topic chips props
+  availablePosts?: Array<PostOption>;
+  onPostSelect?: (post: PostOption) => void;
+  selectedPostSlug?: string;
+  // Post metadata for enhanced system prompt
+  postTitle?: string;
+  postDescription?: string;
+  postSlug?: string;
 }
 
 export default function AIChatView({
@@ -42,6 +57,12 @@ export default function AIChatView({
   onClose,
   hideAttachments = false,
   selectedModel,
+  availablePosts,
+  onPostSelect,
+  selectedPostSlug,
+  postTitle,
+  postDescription,
+  postSlug,
 }: AIChatViewProps) {
   // State
   const [inputValue, setInputValue] = useState("");
@@ -75,6 +96,28 @@ export default function AIChatView({
 
   // Session ID
   const sessionId = getSessionId();
+
+  // Build enhanced page content with post metadata
+  const enhancedPageContent = useMemo(() => {
+    if (!pageContent) return undefined;
+    if (!postTitle) return pageContent;
+
+    // Build context with post metadata
+    let context = `# Blog Post Context\n\n`;
+    context += `**Title:** ${postTitle}\n`;
+
+    if (postDescription) {
+      context += `**Description:** ${postDescription}\n`;
+    }
+
+    if (postSlug) {
+      context += `**Link:** ${window.location.origin}/${postSlug}\n`;
+    }
+
+    context += `\n---\n\n**Post Content:**\n\n${pageContent}`;
+
+    return context;
+  }, [pageContent, postTitle, postDescription, postSlug]);
 
   // Convex hooks
   const chat = useQuery(
@@ -337,7 +380,7 @@ export default function AIChatView({
         chatId,
         userMessage: message || "",
         model: selectedModel as "gemini-3-flash-preview" | "gemini-3-pro-preview" | undefined,
-        pageContext: hasLoadedContext ? undefined : pageContent,
+        pageContext: hasLoadedContext ? undefined : enhancedPageContent,
         attachments:
           attachmentsToSend.length > 0 ? attachmentsToSend : undefined,
       });
@@ -380,9 +423,9 @@ export default function AIChatView({
 
   // Handle load page context
   const handleLoadContext = async () => {
-    if (!chatId || !pageContent) return;
+    if (!chatId || !enhancedPageContent) return;
 
-    await setPageContext({ chatId, pageContext: pageContent });
+    await setPageContext({ chatId, pageContext: enhancedPageContent });
     setHasLoadedContext(true);
   };
 
@@ -418,7 +461,7 @@ export default function AIChatView({
       <div className="ai-chat-header">
         <span className="ai-chat-title">Agent</span>
         <div className="ai-chat-header-actions">
-          {pageContent && !hasLoadedContext && (
+          {enhancedPageContent && !hasLoadedContext && (
             <button
               className="ai-chat-load-context-button"
               onClick={handleLoadContext}
@@ -428,7 +471,7 @@ export default function AIChatView({
               <span>Load Page</span>
             </button>
           )}
-          {pageContent && hasLoadedContext && (
+          {enhancedPageContent && hasLoadedContext && (
             <span className="ai-chat-context-loaded">
               <Check size={14} weight="bold" />
               Context loaded
@@ -592,6 +635,22 @@ export default function AIChatView({
                 </>
               )}
             </div>
+          ))}
+        </div>
+      )}
+
+      {/* Topic chips - shown when posts available */}
+      {availablePosts && availablePosts.length > 0 && (
+        <div className="ai-chat-topic-chips">
+          {availablePosts.map((post) => (
+            <button
+              key={post.slug}
+              className={`ai-chat-topic-chip ${selectedPostSlug === post.slug ? "active" : ""}`}
+              onClick={() => onPostSelect?.(post)}
+              title={post.title}
+            >
+              {post.title}
+            </button>
           ))}
         </div>
       )}

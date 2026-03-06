@@ -392,28 +392,23 @@ export default function Post({
     hreflangDefault.setAttribute("href", canonicalUrl);
   }, [page, post]);
 
-  // Check if we're loading a docs page - keep layout mounted to prevent flash
-  const isDocsRoute = siteConfig.docsSection?.enabled && slug;
-
-  // Return null during initial load to avoid flash (Convex data arrives quickly)
-  // But for docs pages, show skeleton within DocsLayout to prevent sidebar flash
+  // Return a generic skeleton during initial load to avoid flash
   if (page === undefined || post === undefined) {
-    if (isDocsRoute) {
-      // Keep DocsLayout mounted during loading to prevent sidebar flash
-      return (
-        <DocsLayout headings={[]} currentSlug={slug || ""}>
-          <article className="docs-article">
-            <div className="docs-article-loading">
+    return (
+      <div className="post-page">
+        <div>
+          <article className="post-article">
+            <div className="docs-article-loading" style={{ marginTop: "2rem" }}>
               <div className="docs-loading-skeleton docs-loading-title" />
+              <div className="docs-loading-skeleton docs-loading-text" />
               <div className="docs-loading-skeleton docs-loading-text" />
               <div className="docs-loading-skeleton docs-loading-text" />
               <div className="docs-loading-skeleton docs-loading-text-short" />
             </div>
           </article>
-        </DocsLayout>
-      );
-    }
-    return null;
+        </div>
+      </div>
+    );
   }
 
   // If it's a static page, render simplified view

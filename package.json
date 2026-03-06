@@ -39,6 +39,8 @@
     "@convex-dev/aggregate": "^0.2.0",
     "@convex-dev/persistent-text-streaming": "^0.3.0",
     "@convex-dev/workos": "^0.0.1",
+    "@fontsource/nunito": "^5.2.7",
+    "@fontsource/outfit": "^5.2.8",
     "@google/genai": "^1.0.1",
     "@mendable/firecrawl-js": "^1.21.1",
     "@modelcontextprotocol/sdk": "^1.0.0",
