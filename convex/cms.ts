@@ -1,7 +1,7 @@
 import { mutation, query } from "./_generated/server";
 import { v } from "convex/values";
 import { internal } from "./_generated/api";
-import { requireAdmin } from "./authUtils";
+import { requireAuth, requireOwnerOrAdmin } from "./authUtils";
 
 // Shared validator for post data
 const postDataValidator = v.object({
@@ -75,7 +75,7 @@ export const createPost = mutation({
   args: { post: postDataValidator },
   returns: v.id("posts"),
   handler: async (ctx, args) => {
-    await requireAdmin(ctx);
+    const identity = await requireAuth(ctx);
 
     // Check if slug already exists
     const existing = await ctx.db
@@ -91,6 +91,9 @@ export const createPost = mutation({
       ...args.post,
       source: "dashboard",
       lastSyncedAt: Date.now(),
+      ownerId: identity.tokenIdentifier,
+      ownerEmail: identity.email ?? undefined,
+      ownerName: identity.name ?? undefined,
     });
 
     return postId;
@@ -137,12 +140,12 @@ export const updatePost = mutation({
   },
   returns: v.null(),
   handler: async (ctx, args) => {
-    await requireAdmin(ctx);
-
     const existing = await ctx.db.get(args.id);
     if (!existing) {
       throw new Error("Post not found");
     }
+
+    await requireOwnerOrAdmin(ctx, existing.ownerId);
 
     // If slug is being changed, check for conflicts
     const newSlug = args.post.slug;
@@ -181,12 +184,12 @@ export const deletePost = mutation({
   args: { id: v.id("posts") },
   returns: v.null(),
   handler: async (ctx, args) => {
-    await requireAdmin(ctx);
-
     const existing = await ctx.db.get(args.id);
     if (!existing) {
       throw new Error("Post not found");
     }
+
+    await requireOwnerOrAdmin(ctx, existing.ownerId);
 
     await ctx.db.delete(args.id);
     return null;
@@ -198,7 +201,7 @@ export const createPage = mutation({
   args: { page: pageDataValidator },
   returns: v.id("pages"),
   handler: async (ctx, args) => {
-    await requireAdmin(ctx);
+    const identity = await requireAuth(ctx);
 
     // Check if slug already exists
     const existing = await ctx.db
@@ -214,6 +217,9 @@ export const createPage = mutation({
       ...args.page,
       source: "dashboard",
       lastSyncedAt: Date.now(),
+      ownerId: identity.tokenIdentifier,
+      ownerEmail: identity.email ?? undefined,
+      ownerName: identity.name ?? undefined,
     });
 
     return pageId;
@@ -257,12 +263,12 @@ export const updatePage = mutation({
   },
   returns: v.null(),
   handler: async (ctx, args) => {
-    await requireAdmin(ctx);
-
     const existing = await ctx.db.get(args.id);
     if (!existing) {
       throw new Error("Page not found");
     }
+
+    await requireOwnerOrAdmin(ctx, existing.ownerId);
 
     // If slug is being changed, check for conflicts
     const newSlug = args.page.slug;
@@ -300,12 +306,12 @@ export const deletePage = mutation({
   args: { id: v.id("pages") },
   returns: v.null(),
   handler: async (ctx, args) => {
-    await requireAdmin(ctx);
-
     const existing = await ctx.db.get(args.id);
     if (!existing) {
       throw new Error("Page not found");
     }
+
+    await requireOwnerOrAdmin(ctx, existing.ownerId);
 
     await ctx.db.delete(args.id);
     return null;

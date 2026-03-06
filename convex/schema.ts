@@ -46,6 +46,10 @@ export default defineSchema({
     lastSyncedAt: v.number(),
     source: v.optional(v.union(v.literal("dashboard"), v.literal("sync"))), // Content source: "dashboard" (created in UI) or "sync" (from markdown files)
     embedding: v.optional(v.array(v.float64())), // Vector embedding for semantic search (1536 dimensions, OpenAI text-embedding-ada-002)
+    // Multi-tenant ownership fields
+    ownerId: v.optional(v.string()), // tokenIdentifier from WorkOS JWT
+    ownerEmail: v.optional(v.string()), // Owner email for display
+    ownerName: v.optional(v.string()), // Owner name for display
   })
     .index("by_slug", ["slug"])
     .index("by_date", ["date"])
@@ -55,6 +59,7 @@ export default defineSchema({
     .index("by_authorName", ["authorName"])
     .index("by_docsSection", ["docsSection"])
     .index("by_source", ["source"])
+    .index("by_ownerId", ["ownerId"])
     .searchIndex("search_content", {
       searchField: "content",
       filterFields: ["published"],
@@ -102,12 +107,17 @@ export default defineSchema({
     lastSyncedAt: v.number(),
     source: v.optional(v.union(v.literal("dashboard"), v.literal("sync"))), // Content source: "dashboard" (created in UI) or "sync" (from markdown files)
     embedding: v.optional(v.array(v.float64())), // Vector embedding for semantic search (1536 dimensions, OpenAI text-embedding-ada-002)
+    // Multi-tenant ownership fields
+    ownerId: v.optional(v.string()), // tokenIdentifier from WorkOS JWT
+    ownerEmail: v.optional(v.string()), // Owner email for display
+    ownerName: v.optional(v.string()), // Owner name for display
   })
   .index("by_slug", ["slug"])
   .index("by_published", ["published"])
   .index("by_featured", ["featured"])
   .index("by_docsSection", ["docsSection"])
   .index("by_source", ["source"])
+  .index("by_ownerId", ["ownerId"])
     .searchIndex("search_content", {
       searchField: "content",
       filterFields: ["published"],

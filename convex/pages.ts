@@ -2,9 +2,11 @@ import { query, mutation } from "./_generated/server";
 import { v } from "convex/values";
 import { internal } from "./_generated/api";
 
-// Get all pages (published and unpublished) for dashboard admin view
+// Get all pages (published and unpublished) for dashboard view
+// When ownerId is provided, returns only that user's pages (user dashboard)
+// When ownerId is omitted, returns all pages (admin view)
 export const listAll = query({
-  args: {},
+  args: { ownerId: v.optional(v.string()) },
   returns: v.array(
     v.object({
       _id: v.id("pages"),
@@ -22,10 +24,21 @@ export const listAll = query({
       authorName: v.optional(v.string()),
       authorImage: v.optional(v.string()),
       source: v.optional(v.union(v.literal("dashboard"), v.literal("sync"))),
+      ownerId: v.optional(v.string()),
+      ownerEmail: v.optional(v.string()),
+      ownerName: v.optional(v.string()),
     }),
   ),
-  handler: async (ctx) => {
-    const pages = await ctx.db.query("pages").collect();
+  handler: async (ctx, args) => {
+    let pages;
+    if (args.ownerId) {
+      pages = await ctx.db
+        .query("pages")
+        .withIndex("by_ownerId", (q) => q.eq("ownerId", args.ownerId))
+        .collect();
+    } else {
+      pages = await ctx.db.query("pages").collect();
+    }
 
     // Sort by order, then by title
     const sortedPages = pages.sort((a, b) => {
@@ -51,6 +64,9 @@ export const listAll = query({
       authorName: page.authorName,
       authorImage: page.authorImage,
       source: page.source,
+      ownerId: page.ownerId,
+      ownerEmail: page.ownerEmail,
+      ownerName: page.ownerName,
     }));
   },
 });

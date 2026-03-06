@@ -879,60 +879,11 @@ function LoginPrompt() {
   );
 }
 
-// Unauthorized access component for non-admin users
-function UnauthorizedAccess() {
-  const { user, signOut } = useAuth();
-
-  return (
-    <div className="dashboard-auth-container">
-      <div className="dashboard-auth-card">
-        <h1>Access Denied</h1>
-        <p>
-          You are signed in as <strong>{user?.email || "unknown"}</strong>, but
-          this account does not have admin access to the dashboard.
-        </p>
-        <p
-          style={{
-            marginTop: "1rem",
-            fontSize: "0.875rem",
-            color: "var(--text-secondary)",
-          }}
-        >
-          Only authorized admin accounts can access the dashboard. If you
-          believe this is an error, please contact the site owner.
-        </p>
-        <div style={{ display: "flex", gap: "1rem", marginTop: "1.5rem", justifyContent: "center" }}>
-          <button
-            onClick={() => signOut()}
-            className="dashboard-sign-in-button"
-          >
-            Sign Out
-          </button>
-          <Link to="/" style={{ display: "flex", alignItems: "center" }}>
-            Back to Home
-          </Link>
-        </div>
-      </div>
-    </div>
-  );
-}
-
-// Admin guard component - checks if WorkOS user email is in the admin list
-function AdminGuard() {
-  const { user } = useAuth();
-
-  if (!isAdminEmail(user?.email)) {
-    return <UnauthorizedAccess />;
-  }
-
-  return <DashboardContent />;
-}
-
 // Main Dashboard export with conditional auth wrapper
 export default function Dashboard() {
   // Check if dashboard is enabled in siteConfig
   const dashboardEnabled = siteConfig.dashboard?.enabled ?? true;
-  const requireAuth = siteConfig.dashboard?.requireAuth ?? true;
+  const requireAuthConfig = siteConfig.dashboard?.requireAuth ?? true;
 
   // If dashboard is disabled, show disabled message
   if (!dashboardEnabled) {
@@ -940,7 +891,7 @@ export default function Dashboard() {
   }
 
   // If auth is required but WorkOS is not configured, show setup instructions
-  if (requireAuth && !isWorkOSConfigured) {
+  if (requireAuthConfig && !isWorkOSConfigured) {
     return <WorkOSSetupRequired />;
   }
 
@@ -949,7 +900,7 @@ export default function Dashboard() {
     return <DashboardContent />;
   }
 
-  // WorkOS is configured, use auth flow with admin check
+  // WorkOS is configured, use auth flow — any authenticated user can access
   return (
     <>
       <AuthLoading>
@@ -959,7 +910,7 @@ export default function Dashboard() {
         <LoginPrompt />
       </Unauthenticated>
       <Authenticated>
-        <AdminGuard />
+        <DashboardContent />
       </Authenticated>
     </>
   );
@@ -1042,9 +993,20 @@ function DashboardContent() {
   >(null);
   const syncOutputRef = useRef<HTMLPreElement>(null);
 
-  // Convex queries
-  const posts = useQuery(api.posts.listAll);
-  const pages = useQuery(api.pages.listAll);
+  // Multi-tenant: get current user's token identifier for scoping
+  const isAdmin = isAdminEmail(user?.email);
+  const myTokenId = useQuery(api.userIdentity.getMyTokenIdentifier);
+  const [showAllContent, setShowAllContent] = useState(false);
+
+  // For non-admin: always filter by own token
+  // For admin with showAllContent: no filter (undefined = all)
+  // For admin without showAllContent: filter by own token
+  const ownerFilter =
+    isAdmin && showAllContent ? undefined : myTokenId ?? undefined;
+
+  // Convex queries (owner-scoped)
+  const posts = useQuery(api.posts.listAll, { ownerId: ownerFilter });
+  const pages = useQuery(api.pages.listAll, { ownerId: ownerFilter });
 
   // CMS mutations for CRUD operations
   const deletePostMutation = useMutation(api.cms.deletePost);
@@ -1843,6 +1805,40 @@ function DashboardContent() {
               {activeSection === "sync" && "Sync Content"}
               {activeSection === "media" && "Media"}
             </h1>
+            {isAdmin && (
+              <div style={{ display: "flex", gap: "0.25rem", marginLeft: "1rem", background: "var(--bg-secondary)", borderRadius: "6px", padding: "2px" }}>
+                <button
+                  onClick={() => setShowAllContent(false)}
+                  style={{
+                    padding: "4px 10px",
+                    fontSize: "0.75rem",
+                    borderRadius: "4px",
+                    border: "none",
+                    cursor: "pointer",
+                    background: !showAllContent ? "var(--accent)" : "transparent",
+                    color: !showAllContent ? "#fff" : "var(--text-secondary)",
+                    fontWeight: !showAllContent ? 600 : 400,
+                  }}
+                >
+                  My Content
+                </button>
+                <button
+                  onClick={() => setShowAllContent(true)}
+                  style={{
+                    padding: "4px 10px",
+                    fontSize: "0.75rem",
+                    borderRadius: "4px",
+                    border: "none",
+                    cursor: "pointer",
+                    background: showAllContent ? "var(--accent)" : "transparent",
+                    color: showAllContent ? "#fff" : "var(--text-secondary)",
+                    fontWeight: showAllContent ? 600 : 400,
+                  }}
+                >
+                  All Content
+                </button>
+              </div>
+            )}
           </div>
 
           <div className="dashboard-header-center">
@@ -2492,7 +2488,7 @@ function QuizzesListView({
   addToast: (message: string, type: ToastType) => void;
 }) {
   const quizzes = useQuery(api.quiz.listAll);
-  const posts = useQuery(api.posts.listAll);
+  const posts = useQuery(api.posts.listAll, {});
   const [filter, setFilter] = useState<"all" | "published" | "draft">("all");
   const [itemsPerPage, setItemsPerPage] = useState(15);
   const [currentPage, setCurrentPage] = useState(0);
@@ -4333,7 +4329,7 @@ function AIAgentSection() {
   const [isDeletingImage, setIsDeletingImage] = useState(false);
 
   // Topic chips state - for selecting posts to chat about
-  const posts = useQuery(api.posts.listAll);
+  const posts = useQuery(api.posts.listAll, {});
   const publishedPosts = posts?.filter((p) => p.published) || [];
   const [selectedPostForChat, setSelectedPostForChat] = useState<{
     slug: string;
