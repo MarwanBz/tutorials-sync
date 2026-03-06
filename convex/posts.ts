@@ -2,9 +2,11 @@ import { query, mutation, internalMutation, internalQuery } from "./_generated/s
 import { v } from "convex/values";
 import { internal } from "./_generated/api";
 
-// Get all posts (published and unpublished) for dashboard admin view
+// Get all posts (published and unpublished) for dashboard view
+// When ownerId is provided, returns only that user's posts (user dashboard)
+// When ownerId is omitted, returns all posts (admin view)
 export const listAll = query({
-  args: {},
+  args: { ownerId: v.optional(v.string()) },
   returns: v.array(
     v.object({
       _id: v.id("posts"),
@@ -24,10 +26,21 @@ export const listAll = query({
       authorName: v.optional(v.string()),
       authorImage: v.optional(v.string()),
       source: v.optional(v.union(v.literal("dashboard"), v.literal("sync"))),
+      ownerId: v.optional(v.string()),
+      ownerEmail: v.optional(v.string()),
+      ownerName: v.optional(v.string()),
     }),
   ),
-  handler: async (ctx) => {
-    const posts = await ctx.db.query("posts").collect();
+  handler: async (ctx, args) => {
+    let posts;
+    if (args.ownerId) {
+      posts = await ctx.db
+        .query("posts")
+        .withIndex("by_ownerId", (q) => q.eq("ownerId", args.ownerId))
+        .collect();
+    } else {
+      posts = await ctx.db.query("posts").collect();
+    }
 
     // Sort by date descending
     const sortedPosts = posts.sort(
@@ -52,6 +65,9 @@ export const listAll = query({
       authorName: post.authorName,
       authorImage: post.authorImage,
       source: post.source,
+      ownerId: post.ownerId,
+      ownerEmail: post.ownerEmail,
+      ownerName: post.ownerName,
     }));
   },
 });

@@ -12,6 +12,7 @@ import type * as aiChatActions from "../aiChatActions.js";
 import type * as aiChats from "../aiChats.js";
 import type * as aiImageGeneration from "../aiImageGeneration.js";
 import type * as askAI from "../askAI.js";
+import type * as authUtils from "../authUtils.js";
 import type * as cms from "../cms.js";
 import type * as contact from "../contact.js";
 import type * as contactActions from "../contactActions.js";
@@ -32,6 +33,7 @@ import type * as search from "../search.js";
 import type * as semanticSearch from "../semanticSearch.js";
 import type * as semanticSearchQueries from "../semanticSearchQueries.js";
 import type * as stats from "../stats.js";
+import type * as userIdentity from "../userIdentity.js";
 import type * as versions from "../versions.js";
 
 import type {
@@ -45,6 +47,7 @@ declare const fullApi: ApiFromModules<{
   aiChats: typeof aiChats;
   aiImageGeneration: typeof aiImageGeneration;
   askAI: typeof askAI;
+  authUtils: typeof authUtils;
   cms: typeof cms;
   contact: typeof contact;
   contactActions: typeof contactActions;
@@ -65,6 +68,7 @@ declare const fullApi: ApiFromModules<{
   semanticSearch: typeof semanticSearch;
   semanticSearchQueries: typeof semanticSearchQueries;
   stats: typeof stats;
+  userIdentity: typeof userIdentity;
   versions: typeof versions;
 }>;
 
