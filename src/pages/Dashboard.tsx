@@ -996,17 +996,20 @@ function DashboardContent() {
   // Multi-tenant: get current user's token identifier for scoping
   const isAdmin = isAdminEmail(user?.email);
   const myTokenId = useQuery(api.userIdentity.getMyTokenIdentifier);
-  const [showAllContent, setShowAllContent] = useState(false);
+  // Default to true for admins so they see all synced content immediately
+  const [showAllContent, setShowAllContent] = useState(true);
 
-  // For non-admin: always filter by own token
+  // For non-admin: always filter by own token (if loading, pass "skip" to avoid fetching all)
   // For admin with showAllContent: no filter (undefined = all)
   // For admin without showAllContent: filter by own token
   const ownerFilter =
-    isAdmin && showAllContent ? undefined : myTokenId ?? undefined;
+    isAdmin && showAllContent ? undefined : myTokenId ?? "loading_skip";
 
   // Convex queries (owner-scoped)
-  const posts = useQuery(api.posts.listAll, { ownerId: ownerFilter });
-  const pages = useQuery(api.pages.listAll, { ownerId: ownerFilter });
+  // Using "skip" ensures we don't accidentally fetch all content while myTokenId is loading
+  const queryOpts = myTokenId === undefined && !isAdmin ? "skip" : { ownerId: ownerFilter };
+  const posts = useQuery(api.posts.listAll, queryOpts);
+  const pages = useQuery(api.pages.listAll, queryOpts);
 
   // CMS mutations for CRUD operations
   const deletePostMutation = useMutation(api.cms.deletePost);
