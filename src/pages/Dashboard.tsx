@@ -846,6 +846,19 @@ function WorkOSSetupRequired() {
   );
 }
 
+// Admin email check helper
+// Reads VITE_ADMIN_EMAILS from environment (comma-separated list)
+const adminEmailsEnv = import.meta.env.VITE_ADMIN_EMAILS || "";
+const adminEmails = adminEmailsEnv
+  .split(",")
+  .map((email: string) => email.trim().toLowerCase())
+  .filter(Boolean);
+
+function isAdminEmail(email: string | undefined): boolean {
+  if (!email || adminEmails.length === 0) return false;
+  return adminEmails.includes(email.toLowerCase());
+}
+
 // Login prompt component for unauthenticated users (only shown when WorkOS is configured)
 function LoginPrompt() {
   const { signIn } = useAuth();
@@ -864,6 +877,55 @@ function LoginPrompt() {
       </div>
     </div>
   );
+}
+
+// Unauthorized access component for non-admin users
+function UnauthorizedAccess() {
+  const { user, signOut } = useAuth();
+
+  return (
+    <div className="dashboard-auth-container">
+      <div className="dashboard-auth-card">
+        <h1>Access Denied</h1>
+        <p>
+          You are signed in as <strong>{user?.email || "unknown"}</strong>, but
+          this account does not have admin access to the dashboard.
+        </p>
+        <p
+          style={{
+            marginTop: "1rem",
+            fontSize: "0.875rem",
+            color: "var(--text-secondary)",
+          }}
+        >
+          Only authorized admin accounts can access the dashboard. If you
+          believe this is an error, please contact the site owner.
+        </p>
+        <div style={{ display: "flex", gap: "1rem", marginTop: "1.5rem", justifyContent: "center" }}>
+          <button
+            onClick={() => signOut()}
+            className="dashboard-sign-in-button"
+          >
+            Sign Out
+          </button>
+          <Link to="/" style={{ display: "flex", alignItems: "center" }}>
+            Back to Home
+          </Link>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// Admin guard component - checks if WorkOS user email is in the admin list
+function AdminGuard() {
+  const { user } = useAuth();
+
+  if (!isAdminEmail(user?.email)) {
+    return <UnauthorizedAccess />;
+  }
+
+  return <DashboardContent />;
 }
 
 // Main Dashboard export with conditional auth wrapper
@@ -887,7 +949,7 @@ export default function Dashboard() {
     return <DashboardContent />;
   }
 
-  // WorkOS is configured, use auth flow
+  // WorkOS is configured, use auth flow with admin check
   return (
     <>
       <AuthLoading>
@@ -897,7 +959,7 @@ export default function Dashboard() {
         <LoginPrompt />
       </Unauthenticated>
       <Authenticated>
-        <DashboardContent />
+        <AdminGuard />
       </Authenticated>
     </>
   );

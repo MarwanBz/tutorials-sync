@@ -1,6 +1,7 @@
 import { mutation, query } from "./_generated/server";
 import { v } from "convex/values";
 import { internal } from "./_generated/api";
+import { requireAdmin } from "./authUtils";
 
 // Shared validator for post data
 const postDataValidator = v.object({
@@ -74,6 +75,8 @@ export const createPost = mutation({
   args: { post: postDataValidator },
   returns: v.id("posts"),
   handler: async (ctx, args) => {
+    await requireAdmin(ctx);
+
     // Check if slug already exists
     const existing = await ctx.db
       .query("posts")
@@ -134,6 +137,8 @@ export const updatePost = mutation({
   },
   returns: v.null(),
   handler: async (ctx, args) => {
+    await requireAdmin(ctx);
+
     const existing = await ctx.db.get(args.id);
     if (!existing) {
       throw new Error("Post not found");
@@ -176,6 +181,8 @@ export const deletePost = mutation({
   args: { id: v.id("posts") },
   returns: v.null(),
   handler: async (ctx, args) => {
+    await requireAdmin(ctx);
+
     const existing = await ctx.db.get(args.id);
     if (!existing) {
       throw new Error("Post not found");
@@ -191,6 +198,8 @@ export const createPage = mutation({
   args: { page: pageDataValidator },
   returns: v.id("pages"),
   handler: async (ctx, args) => {
+    await requireAdmin(ctx);
+
     // Check if slug already exists
     const existing = await ctx.db
       .query("pages")
@@ -248,6 +257,8 @@ export const updatePage = mutation({
   },
   returns: v.null(),
   handler: async (ctx, args) => {
+    await requireAdmin(ctx);
+
     const existing = await ctx.db.get(args.id);
     if (!existing) {
       throw new Error("Page not found");
@@ -289,6 +300,8 @@ export const deletePage = mutation({
   args: { id: v.id("pages") },
   returns: v.null(),
   handler: async (ctx, args) => {
+    await requireAdmin(ctx);
+
     const existing = await ctx.db.get(args.id);
     if (!existing) {
       throw new Error("Page not found");

@@ -1,5 +1,6 @@
 import { query, mutation } from "./_generated/server";
 import { v } from "convex/values";
+import { requireAdmin } from "./authUtils";
 
 // Question type used across functions
 const questionValidator = v.object({
@@ -302,6 +303,8 @@ export const createQuiz = mutation({
   },
   returns: v.id("quizzes"),
   handler: async (ctx, args) => {
+    await requireAdmin(ctx);
+
     const now = Date.now();
 
     const quizId = await ctx.db.insert("quizzes", {
@@ -329,6 +332,8 @@ export const updateQuiz = mutation({
   },
   returns: v.null(),
   handler: async (ctx, args) => {
+    await requireAdmin(ctx);
+
     const existing = await ctx.db.get(args.quizId);
 
     if (!existing) {
@@ -363,6 +368,8 @@ export const deleteQuiz = mutation({
   },
   returns: v.boolean(),
   handler: async (ctx, args) => {
+    await requireAdmin(ctx);
+
     const existing = await ctx.db.get(args.quizId);
 
     if (!existing) {
