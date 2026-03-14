@@ -316,11 +316,13 @@ export default defineSchema({
     .index("by_published", ["published"]),
 
   // Quiz submissions to track user answers and scores
-  // Links to quiz via quizId, tracks anonymous sessions via sessionId
+  // Links to quiz via quizId. New submissions are tracked by authenticated userId.
+  // sessionId is kept optional for backwards compatibility with legacy data.
   quizSubmissions: defineTable({
     quizId: v.id("quizzes"), // Reference to the quiz
     postSlug: v.string(), // Denormalized postSlug for efficient queries
-    sessionId: v.string(), // Anonymous session identifier from localStorage
+    userId: v.optional(v.string()), // Authenticated user identifier (tokenIdentifier)
+    sessionId: v.optional(v.string()), // Legacy anonymous session identifier
     answers: v.array(
       v.object({
         questionId: v.string(), // Question ID being answered
@@ -337,5 +339,26 @@ export default defineSchema({
     .index("by_postSlug", ["postSlug"])
     .index("by_session_post", ["sessionId", "postSlug"])
     .index("by_sessionId", ["sessionId"])
+    .index("by_user_post_submittedAt", ["userId", "postSlug", "submittedAt"])
+    .index("by_user_submittedAt", ["userId", "submittedAt"])
     .index("by_submittedAt", ["submittedAt"]),
+
+  // Per-user quiz progress for spaced repetition and fast practice views
+  quizProgress: defineTable({
+    userId: v.string(), // Authenticated user identifier (tokenIdentifier)
+    postSlug: v.string(), // Tutorial slug this progress belongs to
+    lastScore: v.number(), // Latest percentage score (0-100)
+    lastSubmittedAt: v.number(), // Timestamp of latest submission
+    nextReviewAt: v.number(), // Timestamp when this tutorial is due for review
+    reviewBucket: v.union(
+      v.literal("excellent"),
+      v.literal("good"),
+      v.literal("fair"),
+      v.literal("needs_review"),
+    ), // Bucket derived from score for interval scheduling
+    attemptCount: v.number(), // Number of attempts by this user for this tutorial
+  })
+    .index("by_user_post", ["userId", "postSlug"])
+    .index("by_user_nextReviewAt", ["userId", "nextReviewAt"])
+    .index("by_user_lastSubmittedAt", ["userId", "lastSubmittedAt"]),
 });

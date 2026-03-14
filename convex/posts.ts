@@ -1,10 +1,39 @@
 import { query, mutation, internalMutation, internalQuery } from "./_generated/server";
 import { v } from "convex/values";
 import { internal } from "./_generated/api";
+import {
+  isAdminIdentity,
+  isPublicContentOwner,
+  requireAuth,
+} from "./authUtils";
+
+function isPublicPost(post: {
+  published: boolean;
+  unlisted?: boolean;
+  ownerId?: string;
+  ownerEmail?: string;
+}): boolean {
+  return (
+    post.published &&
+    isPublicContentOwner(post.ownerId, post.ownerEmail)
+  );
+}
+
+function isPublicListedPost(post: {
+  published: boolean;
+  unlisted?: boolean;
+  ownerId?: string;
+  ownerEmail?: string;
+}): boolean {
+  return (
+    isPublicPost(post) &&
+    !post.unlisted
+  );
+}
 
 // Get all posts (published and unpublished) for dashboard view
-// When ownerId is provided, returns only that user's posts (user dashboard)
-// When ownerId is omitted, returns all posts (admin view)
+// For non-admin users, scope is always the authenticated user's tenant.
+// Admins can pass ownerId to filter or omit it to view all content.
 export const listAll = query({
   args: { ownerId: v.optional(v.string()) },
   returns: v.array(
@@ -32,14 +61,21 @@ export const listAll = query({
     }),
   ),
   handler: async (ctx, args) => {
+    const identity = await requireAuth(ctx);
+    const isAdmin = isAdminIdentity(identity);
+
     let posts;
-    if (args.ownerId) {
+    if (isAdmin && args.ownerId === undefined) {
+      posts = await ctx.db.query("posts").collect();
+    } else {
+      const ownerId = isAdmin ? args.ownerId : identity.tokenIdentifier;
+      if (!ownerId) {
+        return [];
+      }
       posts = await ctx.db
         .query("posts")
-        .withIndex("by_ownerId", (q) => q.eq("ownerId", args.ownerId))
+        .withIndex("by_ownerId", (q) => q.eq("ownerId", ownerId))
         .collect();
-    } else {
-      posts = await ctx.db.query("posts").collect();
     }
 
     // Sort by date descending
@@ -107,8 +143,7 @@ export const getAllPosts = query({
       .withIndex("by_published", (q) => q.eq("published", true))
       .collect();
 
-    // Filter out unlisted posts
-    const listedPosts = posts.filter((p) => !p.unlisted);
+    const listedPosts = posts.filter(isPublicListedPost);
 
     // Sort by date descending
     const sortedPosts = listedPosts.sort(
@@ -167,9 +202,8 @@ export const getBlogFeaturedPosts = query({
       .withIndex("by_blogFeatured", (q) => q.eq("blogFeatured", true))
       .collect();
 
-    // Filter to only published posts and sort by date descending
     const publishedFeatured = posts
-      .filter((p) => p.published && !p.unlisted)
+      .filter(isPublicListedPost)
       .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
 
     return publishedFeatured.map((post) => ({
@@ -208,9 +242,8 @@ export const getFeaturedPosts = query({
       .withIndex("by_featured", (q) => q.eq("featured", true))
       .collect();
 
-    // Filter to only published posts and sort by featuredOrder
     const featuredPosts = posts
-      .filter((p) => p.published && !p.unlisted)
+      .filter(isPublicListedPost)
       .sort((a, b) => {
         const orderA = a.featuredOrder ?? 999;
         const orderB = b.featuredOrder ?? 999;
@@ -273,7 +306,7 @@ export const getPostBySlug = query({
       .withIndex("by_slug", (q) => q.eq("slug", args.slug))
       .first();
 
-    if (!post || !post.published) {
+    if (!post || !isPublicPost(post)) {
       return null;
     }
 
@@ -332,7 +365,7 @@ export const getPostBySlugInternal = internalQuery({
       .withIndex("by_slug", (q) => q.eq("slug", args.slug))
       .first();
 
-    if (!post || !post.published) {
+    if (!post || !isPublicPost(post)) {
       return null;
     }
 
@@ -367,9 +400,8 @@ export const getRecentPostsInternal = internalQuery({
       .withIndex("by_published", (q) => q.eq("published", true))
       .collect();
 
-    // Filter posts by date and sort descending, excluding unlisted
     const recentPosts = posts
-      .filter((post) => post.date >= args.since && !post.unlisted)
+      .filter((post) => post.date >= args.since && isPublicListedPost(post))
       .sort((a, b) => b.date.localeCompare(a.date))
       .map((post) => ({
         slug: post.slug,
@@ -760,8 +792,7 @@ export const getAllTags = query({
       .withIndex("by_published", (q) => q.eq("published", true))
       .collect();
 
-    // Filter out unlisted posts
-    const listedPosts = posts.filter((p) => !p.unlisted);
+    const listedPosts = posts.filter(isPublicListedPost);
 
     // Count occurrences of each tag
     const tagCounts = new Map<string, number>();
@@ -811,9 +842,9 @@ export const getPostsByTag = query({
       .withIndex("by_published", (q) => q.eq("published", true))
       .collect();
 
-    // Filter posts that have the specified tag and are not unlisted
     const filteredPosts = posts.filter(
       (post) =>
+        isPublicPost(post) &&
         !post.unlisted &&
         post.tags.some((t) => t.toLowerCase() === args.tag.toLowerCase()),
     );
@@ -880,9 +911,12 @@ export const getRelatedPosts = query({
       .withIndex("by_published", (q) => q.eq("published", true))
       .collect();
 
-    // Find posts that share tags, excluding current post and unlisted posts
     const relatedPosts = posts
-      .filter((post) => post.slug !== args.currentSlug && !post.unlisted)
+      .filter(
+        (post) =>
+          post.slug !== args.currentSlug &&
+          isPublicListedPost(post),
+      )
       .map((post) => {
         const sharedTags = post.tags.filter((tag) =>
           args.tags.some((t) => t.toLowerCase() === tag.toLowerCase()),
@@ -930,8 +964,9 @@ export const getAllAuthors = query({
       .withIndex("by_published", (q) => q.eq("published", true))
       .collect();
 
-    // Filter out unlisted posts and posts without author
-    const publishedPosts = posts.filter((p) => !p.unlisted && p.authorName);
+    const publishedPosts = posts.filter(
+      (p) => isPublicListedPost(p) && p.authorName,
+    );
 
     // Count posts per author
     const authorCounts = new Map<string, number>();
@@ -986,9 +1021,8 @@ export const getPostsByAuthor = query({
       .withIndex("by_published", (q) => q.eq("published", true))
       .collect();
 
-    // Filter posts by author slug match and not unlisted
     const filteredPosts = posts.filter((post) => {
-      if (!post.authorName || post.unlisted) return false;
+      if (!post.authorName || !isPublicListedPost(post)) return false;
       const slug = post.authorName.toLowerCase().replace(/\s+/g, "-");
       return slug === args.authorSlug;
     });
@@ -1040,8 +1074,9 @@ export const getDocsPosts = query({
       .withIndex("by_docsSection", (q) => q.eq("docsSection", true))
       .collect();
 
-    // Filter to only published posts
-    const publishedDocs = posts.filter((p) => p.published);
+    const publishedDocs = posts.filter(
+      (p) => p.published && isPublicContentOwner(p.ownerId, p.ownerEmail),
+    );
 
     // Sort by docsSectionOrder, then by title
     const sortedDocs = publishedDocs.sort((a, b) => {
@@ -1096,7 +1131,12 @@ export const getDocsLandingPost = query({
       .withIndex("by_docsSection", (q) => q.eq("docsSection", true))
       .collect();
 
-    const landing = posts.find((p) => p.published && p.docsLanding);
+    const landing = posts.find(
+      (p) =>
+        p.published &&
+        p.docsLanding &&
+        isPublicContentOwner(p.ownerId, p.ownerEmail),
+    );
 
     if (!landing) return null;
 
@@ -1125,9 +1165,7 @@ export const getDocsLandingPost = query({
 // Get learning progress data for the progress dashboard
 // Returns tutorials with quiz results and concept mastery tracking
 export const getLearningProgress = query({
-  args: {
-    sessionId: v.optional(v.string()), // Optional session ID for user-specific data
-  },
+  args: {},
   returns: v.object({
     overallProgress: v.number(), // Percentage of tutorials with passing quiz scores
     tutorials: v.array(
@@ -1161,15 +1199,16 @@ export const getLearningProgress = query({
       })
     ),
   }),
-  handler: async (ctx, args) => {
+  handler: async (ctx) => {
+    const identity = await requireAuth(ctx);
+
     // Get all published posts (tutorials)
     const posts = await ctx.db
       .query("posts")
       .withIndex("by_published", (q) => q.eq("published", true))
       .collect();
 
-    // Filter out unlisted posts
-    const tutorials = posts.filter((p) => !p.unlisted);
+    const tutorials = posts.filter(isPublicListedPost);
 
     // Get all quizzes to check which tutorials have quizzes
     const quizzes = await ctx.db.query("quizzes").collect();
@@ -1177,22 +1216,29 @@ export const getLearningProgress = query({
       quizzes.filter((q) => q.published).map((q) => q.postSlug)
     );
 
-    // Get user's quiz submissions if sessionId provided
-    let userSubmissions: Map<string, any> | null = null;
-    if (args.sessionId) {
-      // Since by_sessionId index doesn't work as expected, collect all and filter
-      const allSubmissions = await ctx.db.query("quizSubmissions").collect();
-      const userSubmissionList = allSubmissions.filter(
-        (s) => s.sessionId === args.sessionId
-      );
+    // Indexed per-user progress map
+    const progressRows = await ctx.db
+      .query("quizProgress")
+      .withIndex("by_user_lastSubmittedAt", (q) =>
+        q.eq("userId", identity.tokenIdentifier)
+      )
+      .collect();
 
-      userSubmissions = new Map();
-      for (const sub of userSubmissionList) {
-        // Keep only the most recent submission per post
-        const existing = userSubmissions.get(sub.postSlug);
-        if (!existing || sub.submittedAt > existing.submittedAt) {
-          userSubmissions.set(sub.postSlug, sub);
-        }
+    const progressByPostSlug = new Map(progressRows.map((row) => [row.postSlug, row]));
+
+    // Indexed per-user quiz submission history
+    const userSubmissionList = await ctx.db
+      .query("quizSubmissions")
+      .withIndex("by_user_submittedAt", (q) =>
+        q.eq("userId", identity.tokenIdentifier)
+      )
+      .order("desc")
+      .take(200);
+
+    const latestSubmissionByPost = new Map<string, (typeof userSubmissionList)[number]>();
+    for (const sub of userSubmissionList) {
+      if (!latestSubmissionByPost.has(sub.postSlug)) {
+        latestSubmissionByPost.set(sub.postSlug, sub);
       }
     }
 
@@ -1202,11 +1248,17 @@ export const getLearningProgress = query({
       let lastScore: number | undefined;
       let lastQuizDate: number | undefined;
 
-      if (userSubmissions && hasQuiz) {
-        const submission = userSubmissions.get(post.slug);
-        if (submission) {
-          lastScore = submission.percentage;
-          lastQuizDate = submission.submittedAt;
+      if (hasQuiz) {
+        const progress = progressByPostSlug.get(post.slug);
+        if (progress) {
+          lastScore = progress.lastScore;
+          lastQuizDate = progress.lastSubmittedAt;
+        } else {
+          const submission = latestSubmissionByPost.get(post.slug);
+          if (submission) {
+            lastScore = submission.percentage;
+            lastQuizDate = submission.submittedAt;
+          }
         }
       }
 
@@ -1263,21 +1315,14 @@ export const getLearningProgress = query({
       .sort((a, b) => a.averageScore - b.averageScore); // Sort by lowest scores first
 
     // Build quiz history
-    let quizHistory: any[] = [];
-    if (userSubmissions) {
-      quizHistory = Array.from(userSubmissions.values())
-        .map((sub) => {
-          const post = tutorials.find((p) => p.slug === sub.postSlug);
-          return {
-            postSlug: sub.postSlug,
-            title: post?.title ?? sub.postSlug,
-            score: sub.score,
-            percentage: sub.percentage,
-            submittedAt: sub.submittedAt,
-          };
-        })
-        .sort((a, b) => b.submittedAt - a.submittedAt); // Most recent first
-    }
+    const tutorialTitleBySlug = new Map(tutorials.map((tutorial) => [tutorial.slug, tutorial.title]));
+    const quizHistory = userSubmissionList.map((sub) => ({
+      postSlug: sub.postSlug,
+      title: tutorialTitleBySlug.get(sub.postSlug) ?? sub.postSlug,
+      score: sub.score,
+      percentage: sub.percentage,
+      submittedAt: sub.submittedAt,
+    }));
 
     return {
       overallProgress,

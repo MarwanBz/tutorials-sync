@@ -1,5 +1,6 @@
 import { v } from "convex/values";
 import { internalMutation, internalQuery } from "./_generated/server";
+import { isPublicContentOwner } from "./authUtils";
 
 // Internal query to get posts without embeddings
 export const getPostsWithoutEmbeddings = internalQuery({
@@ -18,7 +19,11 @@ export const getPostsWithoutEmbeddings = internalQuery({
       .collect();
 
     return posts
-      .filter((post) => !post.embedding)
+      .filter(
+        (post) =>
+          !post.embedding &&
+          isPublicContentOwner(post.ownerId, post.ownerEmail),
+      )
       .slice(0, args.limit)
       .map((post) => ({
         _id: post._id,
@@ -45,7 +50,11 @@ export const getPagesWithoutEmbeddings = internalQuery({
       .collect();
 
     return pages
-      .filter((page) => !page.embedding)
+      .filter(
+        (page) =>
+          !page.embedding &&
+          isPublicContentOwner(page.ownerId, page.ownerEmail),
+      )
       .slice(0, args.limit)
       .map((page) => ({
         _id: page._id,
@@ -94,7 +103,12 @@ export const getPostBySlug = internalQuery({
       .withIndex("by_slug", (q) => q.eq("slug", args.slug))
       .first();
 
-    if (!post) return null;
+    if (
+      !post ||
+      !isPublicContentOwner(post.ownerId, post.ownerEmail)
+    ) {
+      return null;
+    }
 
     return {
       _id: post._id,

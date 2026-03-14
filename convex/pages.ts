@@ -1,10 +1,26 @@
 import { query, mutation } from "./_generated/server";
 import { v } from "convex/values";
 import { internal } from "./_generated/api";
+import {
+  isAdminIdentity,
+  isPublicContentOwner,
+  requireAuth,
+} from "./authUtils";
+
+function isPublicPage(page: {
+  published: boolean;
+  ownerId?: string;
+  ownerEmail?: string;
+}): boolean {
+  return (
+    page.published &&
+    isPublicContentOwner(page.ownerId, page.ownerEmail)
+  );
+}
 
 // Get all pages (published and unpublished) for dashboard view
-// When ownerId is provided, returns only that user's pages (user dashboard)
-// When ownerId is omitted, returns all pages (admin view)
+// For non-admin users, scope is always the authenticated user's tenant.
+// Admins can pass ownerId to filter or omit it to view all content.
 export const listAll = query({
   args: { ownerId: v.optional(v.string()) },
   returns: v.array(
@@ -30,14 +46,21 @@ export const listAll = query({
     }),
   ),
   handler: async (ctx, args) => {
+    const identity = await requireAuth(ctx);
+    const isAdmin = isAdminIdentity(identity);
+
     let pages;
-    if (args.ownerId) {
+    if (isAdmin && args.ownerId === undefined) {
+      pages = await ctx.db.query("pages").collect();
+    } else {
+      const ownerId = isAdmin ? args.ownerId : identity.tokenIdentifier;
+      if (!ownerId) {
+        return [];
+      }
       pages = await ctx.db
         .query("pages")
-        .withIndex("by_ownerId", (q) => q.eq("ownerId", args.ownerId))
+        .withIndex("by_ownerId", (q) => q.eq("ownerId", ownerId))
         .collect();
-    } else {
-      pages = await ctx.db.query("pages").collect();
     }
 
     // Sort by order, then by title
@@ -100,10 +123,8 @@ export const getAllPages = query({
       .withIndex("by_published", (q) => q.eq("published", true))
       .collect();
 
-    // Filter out pages where showInNav is explicitly false
-    // Default to true for backwards compatibility (undefined/null = show in nav)
     const visiblePages = pages.filter(
-      (page) => page.showInNav !== false,
+      (page) => isPublicPage(page) && page.showInNav !== false,
     );
 
     // Sort by order (lower numbers first), then by title
@@ -153,9 +174,8 @@ export const getFeaturedPages = query({
       .withIndex("by_featured", (q) => q.eq("featured", true))
       .collect();
 
-    // Filter to only published pages and sort by featuredOrder
     const featuredPages = pages
-      .filter((p) => p.published)
+      .filter(isPublicPage)
       .sort((a, b) => {
         const orderA = a.featuredOrder ?? 999;
         const orderB = b.featuredOrder ?? 999;
@@ -213,7 +233,7 @@ export const getPageBySlug = query({
       .withIndex("by_slug", (q) => q.eq("slug", args.slug))
       .first();
 
-    if (!page || !page.published) {
+    if (!page || !isPublicPage(page)) {
       return null;
     }
 
@@ -267,8 +287,7 @@ export const getDocsPages = query({
       .withIndex("by_docsSection", (q) => q.eq("docsSection", true))
       .collect();
 
-    // Filter to only published pages
-    const publishedDocs = pages.filter((p) => p.published);
+    const publishedDocs = pages.filter(isPublicPage);
 
     // Sort by docsSectionOrder, then by title
     const sortedDocs = publishedDocs.sort((a, b) => {
@@ -320,7 +339,7 @@ export const getDocsLandingPage = query({
       .withIndex("by_docsSection", (q) => q.eq("docsSection", true))
       .collect();
 
-    const landing = pages.find((p) => p.published && p.docsLanding);
+    const landing = pages.find((p) => isPublicPage(p) && p.docsLanding);
 
     if (!landing) return null;
 
