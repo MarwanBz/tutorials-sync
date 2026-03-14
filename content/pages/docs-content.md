@@ -258,9 +258,49 @@ npm run sync:all          # Sync content + discovery files together
 
 ```bash
 npm run sync:prod              # Sync markdown content
-npm run sync:discovery:prod   # Update discovery files
-npm run sync:all:prod         # Sync content + discovery files together
+npm run sync:discovery:prod    # Update discovery files
+npm run sync:all:prod          # Sync content + discovery files together
 ```
+
+### Quiz content and sync
+
+Quizzes are stored as JSON files in `content/quiz/` and synced to Convex.
+
+**Quiz JSON schema:**
+
+```json
+{
+  "postSlug": "my-tutorial-slug",
+  "title": "Quiz: My Tutorial",
+  "description": "Optional short description",
+  "questions": [
+    {
+      "id": "q1",
+      "question": "Question text?",
+      "options": ["A", "B", "C", "D"],
+      "correctAnswer": 1,
+      "explanation": "Optional explanation"
+    }
+  ]
+}
+```
+
+**Validation rules:**
+
+- `postSlug` must match an existing synced, published post slug
+- each question must have a unique `id`
+- each question must have exactly 4 options
+- `correctAnswer` must be a valid 0-based option index
+
+**Sync commands:**
+
+```bash
+npm run sync:quiz                # Sync quiz JSON files to Convex
+npm run sync:quiz -- --prune     # Also delete stale quizzes not present locally
+npm run sync:quiz:prod           # Production quiz sync
+```
+
+**Authentication note:** Taking and submitting quizzes now requires a signed-in user. Quiz reads remain public for published content, but score/progress tracking is user-specific.
 
 **Sync everything together:**
 

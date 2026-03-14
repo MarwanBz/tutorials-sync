@@ -1,5 +1,6 @@
 import { query } from "./_generated/server";
 import { v } from "convex/values";
+import { isPublicContentOwner } from "./authUtils";
 
 // Search result type for both posts and pages
 const searchResultValidator = v.object({
@@ -72,8 +73,12 @@ export const search = query({
       if (seenPostIds.has(post._id)) continue;
       seenPostIds.add(post._id);
 
-      // Skip unlisted posts
-      if (post.unlisted) continue;
+      if (
+        post.unlisted ||
+        !isPublicContentOwner(post.ownerId, post.ownerEmail)
+      ) {
+        continue;
+      }
 
       // Create snippet from content and find anchor
       const { snippet, anchor } = createSnippet(post.content, args.query, 120);
@@ -94,6 +99,10 @@ export const search = query({
     for (const page of [...pagesByTitle, ...pagesByContent]) {
       if (seenPageIds.has(page._id)) continue;
       seenPageIds.add(page._id);
+
+      if (!isPublicContentOwner(page.ownerId, page.ownerEmail)) {
+        continue;
+      }
 
       // Create snippet from content and find anchor
       const { snippet, anchor } = createSnippet(page.content, args.query, 120);
@@ -216,4 +225,3 @@ function createSnippet(
 
   return { snippet, anchor };
 }
-

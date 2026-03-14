@@ -1,5 +1,6 @@
 import { v } from "convex/values";
 import { internalQuery } from "./_generated/server";
+import { isPublicContentOwner } from "./authUtils";
 
 // Internal query to fetch post details by IDs
 export const fetchPostsByIds = internalQuery({
@@ -18,7 +19,12 @@ export const fetchPostsByIds = internalQuery({
     const results = [];
     for (const id of args.ids) {
       const doc = await ctx.db.get(id);
-      if (doc && doc.published && !doc.unlisted) {
+      if (
+        doc &&
+        doc.published &&
+        !doc.unlisted &&
+        isPublicContentOwner(doc.ownerId, doc.ownerEmail)
+      ) {
         results.push({
           _id: doc._id,
           slug: doc.slug,
@@ -48,7 +54,11 @@ export const fetchPagesByIds = internalQuery({
     const results = [];
     for (const id of args.ids) {
       const doc = await ctx.db.get(id);
-      if (doc && doc.published) {
+      if (
+        doc &&
+        doc.published &&
+        isPublicContentOwner(doc.ownerId, doc.ownerEmail)
+      ) {
         results.push({
           _id: doc._id,
           slug: doc.slug,

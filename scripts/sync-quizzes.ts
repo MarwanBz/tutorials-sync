@@ -4,7 +4,6 @@ import { ConvexHttpClient } from "convex/browser";
 import { api } from "../convex/_generated/api";
 import dotenv from "dotenv";
 
-// Load environment variables based on SYNC_ENV
 const isProduction = process.env.SYNC_ENV === "production";
 
 if (isProduction) {
@@ -15,8 +14,8 @@ if (isProduction) {
 }
 dotenv.config();
 
-// Quiz content directory
 const QUIZ_DIR = path.join(process.cwd(), "content", "quiz");
+const shouldPrune = process.argv.includes("--prune");
 
 interface QuizQuestion {
   id: string;
@@ -33,32 +32,41 @@ interface QuizData {
   questions: QuizQuestion[];
 }
 
-// Parse a single quiz JSON file
 function parseQuizFile(filePath: string): QuizData | null {
   try {
     const fileContent = fs.readFileSync(filePath, "utf-8");
     const quiz = JSON.parse(fileContent) as QuizData;
 
-    // Validate required fields
     if (!quiz.postSlug || !quiz.title || !quiz.questions) {
       console.warn(`Skipping ${filePath}: missing required fields`);
       return null;
     }
 
-    // Validate questions
     if (!Array.isArray(quiz.questions) || quiz.questions.length === 0) {
       console.warn(`Skipping ${filePath}: no questions found`);
       return null;
     }
 
-    // Validate each question
-    for (const q of quiz.questions) {
-      if (!q.id || !q.question || !q.options || q.correctAnswer === undefined) {
-        console.warn(`Skipping ${filePath}: invalid question structure`);
+    const questionIds = new Set<string>();
+    for (const [index, q] of quiz.questions.entries()) {
+      if (!q.id || !q.question || !Array.isArray(q.options) || q.correctAnswer === undefined) {
+        console.warn(`Skipping ${filePath}: invalid question structure at index ${index}`);
         return null;
       }
+
+      if (questionIds.has(q.id)) {
+        console.warn(`Skipping ${filePath}: duplicate question id "${q.id}"`);
+        return null;
+      }
+      questionIds.add(q.id);
+
+      if (q.options.length !== 4) {
+        console.warn(`Skipping ${filePath}: question "${q.id}" must have exactly 4 options`);
+        return null;
+      }
+
       if (q.correctAnswer < 0 || q.correctAnswer >= q.options.length) {
-        console.warn(`Skipping ${filePath}: invalid correctAnswer index`);
+        console.warn(`Skipping ${filePath}: invalid correctAnswer index for question "${q.id}"`);
         return null;
       }
     }
@@ -70,7 +78,6 @@ function parseQuizFile(filePath: string): QuizData | null {
   }
 }
 
-// Get all quiz JSON files from the quiz directory
 function getAllQuizFiles(): string[] {
   if (!fs.existsSync(QUIZ_DIR)) {
     console.log(`No quiz directory found at ${QUIZ_DIR}`);
@@ -83,23 +90,20 @@ function getAllQuizFiles(): string[] {
     .map((file) => path.join(QUIZ_DIR, file));
 }
 
-// Main sync function
 async function syncQuizzes() {
   console.log("Starting quiz sync...\n");
+  if (shouldPrune) {
+    console.log("Prune mode enabled: quizzes missing from content/quiz will be deleted in Convex.\n");
+  }
 
-  // Get Convex URL from environment
   const convexUrl = process.env.VITE_CONVEX_URL || process.env.CONVEX_URL;
   if (!convexUrl) {
-    console.error(
-      "Error: VITE_CONVEX_URL or CONVEX_URL environment variable is not set",
-    );
+    console.error("Error: VITE_CONVEX_URL or CONVEX_URL environment variable is not set");
     process.exit(1);
   }
 
-  // Initialize Convex client
   const client = new ConvexHttpClient(convexUrl);
 
-  // Get all quiz files
   const quizFiles = getAllQuizFiles();
   console.log(`Found ${quizFiles.length} quiz files\n`);
 
@@ -108,30 +112,60 @@ async function syncQuizzes() {
     return;
   }
 
-  // Parse all quiz files
+  const publishedPosts = await client.query(api.posts.getAllPosts, {});
+  const validPostSlugs = new Set(publishedPosts.map((post) => post.slug));
+
   const quizzes: QuizData[] = [];
+  let skippedInvalid = 0;
+
   for (const filePath of quizFiles) {
     const quiz = parseQuizFile(filePath);
-    if (quiz) {
-      quizzes.push(quiz);
-      console.log(`Parsed: ${quiz.title} (${quiz.postSlug})`);
+    if (!quiz) {
+      skippedInvalid += 1;
+      continue;
     }
+
+    if (!validPostSlugs.has(quiz.postSlug)) {
+      console.warn(
+        `Skipping ${filePath}: postSlug "${quiz.postSlug}" does not exist in published posts (run npm run sync first).`,
+      );
+      skippedInvalid += 1;
+      continue;
+    }
+
+    quizzes.push(quiz);
+    console.log(`Parsed: ${quiz.title} (${quiz.postSlug})`);
+  }
+
+  if (quizzes.length === 0) {
+    console.error("\nNo valid quiz files to sync.");
+    if (skippedInvalid > 0) {
+      console.error(`Skipped ${skippedInvalid} invalid file(s).`);
+    }
+    process.exit(1);
   }
 
   console.log(`\nSyncing ${quizzes.length} quizzes to Convex...\n`);
 
-  // Sync quizzes to Convex
   try {
-    for (const quiz of quizzes) {
-      await client.mutation(api.quiz.syncQuiz, { quiz });
-      console.log(`  Synced: ${quiz.title}`);
+    const result = await client.mutation(api.quiz.syncQuizzes, {
+      quizzes,
+      pruneMissing: shouldPrune,
+    });
+
+    console.log("Quiz sync complete!");
+    console.log(`  Upserted: ${result.upserted}`);
+    if (shouldPrune) {
+      console.log(`  Pruned: ${result.pruned}`);
     }
-    console.log("\nQuiz sync complete!");
+
+    if (skippedInvalid > 0) {
+      console.log(`  Skipped invalid: ${skippedInvalid}`);
+    }
   } catch (error) {
     console.error("Error syncing quizzes:", error);
     process.exit(1);
   }
 }
 
-// Run the sync
 syncQuizzes().catch(console.error);

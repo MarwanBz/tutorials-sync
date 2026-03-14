@@ -1,5 +1,33 @@
 import { QueryCtx, MutationCtx } from "./_generated/server";
 
+function getAdminEmails(): string[] {
+  return (process.env.ADMIN_EMAILS ?? "")
+    .split(",")
+    .map((email) => email.trim().toLowerCase())
+    .filter(Boolean);
+}
+
+export function isAdminEmail(email: string | null | undefined): boolean {
+  if (!email) return false;
+  return getAdminEmails().includes(email.trim().toLowerCase());
+}
+
+export function isAdminIdentity(identity: {
+  email?: string | null;
+} | null | undefined): boolean {
+  return isAdminEmail(identity?.email);
+}
+
+export function isPublicContentOwner(
+  ownerId: string | undefined,
+  ownerEmail: string | undefined,
+): boolean {
+  // Legacy synced content has no owner and remains public.
+  if (!ownerId) return true;
+  // Tenant-owned content is public only for admin-owned tenants.
+  return isAdminEmail(ownerEmail);
+}
+
 /**
  * Checks that the current user is authenticated AND is an admin.
  * Admin emails are configured via the ADMIN_EMAILS environment variable
@@ -18,21 +46,15 @@ export async function requireAdmin(
     throw new Error("Authentication required. Please sign in.");
   }
 
-  const adminEmailsEnv = process.env.ADMIN_EMAILS;
-  if (!adminEmailsEnv) {
+  const adminEmails = getAdminEmails();
+  if (adminEmails.length === 0) {
     throw new Error(
       "ADMIN_EMAILS environment variable is not configured. " +
         "Set it in the Convex dashboard to enable admin access.",
     );
   }
 
-  const adminEmails = adminEmailsEnv
-    .split(",")
-    .map((email) => email.trim().toLowerCase());
-
-  const userEmail = identity.email?.toLowerCase();
-
-  if (!userEmail || !adminEmails.includes(userEmail)) {
+  if (!isAdminIdentity(identity)) {
     throw new Error(
       "Unauthorized. You do not have admin access to this dashboard.",
     );
@@ -75,18 +97,8 @@ export async function requireOwnerOrAdmin(
     throw new Error("Authentication required. Please sign in.");
   }
 
-  // Check if admin
-  const adminEmailsEnv = process.env.ADMIN_EMAILS;
-  if (adminEmailsEnv) {
-    const adminEmails = adminEmailsEnv
-      .split(",")
-      .map((e) => e.trim().toLowerCase());
-    if (
-      identity.email &&
-      adminEmails.includes(identity.email.toLowerCase())
-    ) {
-      return; // admin can do anything
-    }
+  if (isAdminIdentity(identity)) {
+    return;
   }
 
   // Check ownership
