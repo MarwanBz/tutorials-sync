@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { useQuery, useMutation } from "convex/react";
+import { useQuery, useMutation, useConvexAuth } from "convex/react";
 import { api } from "../../convex/_generated/api";
 import { Check, X, RotateCcw } from "lucide-react";
 
@@ -17,23 +17,16 @@ interface QuizState {
 // Displays multiple choice questions, validates answers, shows score
 // Saves results to Convex for progress tracking
 export default function Quiz({ postSlug }: QuizProps) {
+  const { isAuthenticated, isLoading: authLoading } = useConvexAuth();
+
   // Fetch quiz data
   const quiz = useQuery(api.quiz.getQuizByPostSlug, { postSlug });
 
-  // Get or create session ID for anonymous quiz tracking
-  const [sessionId] = useState(() => {
-    const stored = localStorage.getItem("quiz_session_id");
-    if (stored) return stored;
-    const newId = `quiz_${Date.now()}_${Math.random().toString(36).substring(2, 11)}`;
-    localStorage.setItem("quiz_session_id", newId);
-    return newId;
-  });
-
   // Get previous submission if exists
-  const previousSubmission = useQuery(api.quiz.getPreviousSubmission, {
-    sessionId,
-    postSlug,
-  });
+  const previousSubmission = useQuery(
+    api.quiz.getMyPreviousSubmission,
+    isAuthenticated ? { postSlug } : "skip",
+  );
 
   // Submit mutation
   const submitQuiz = useMutation(api.quiz.submitQuiz);
@@ -104,7 +97,6 @@ export default function Quiz({ postSlug }: QuizProps) {
 
       const submissionResult = await submitQuiz({
         quizId: quiz._id,
-        sessionId,
         answers,
       });
 
@@ -131,7 +123,7 @@ export default function Quiz({ postSlug }: QuizProps) {
   };
 
   // Loading state
-  if (quiz === undefined) {
+  if (quiz === undefined || authLoading) {
     return (
       <div className="quiz">
         <div className="quiz__loading">Loading quiz...</div>
@@ -142,6 +134,23 @@ export default function Quiz({ postSlug }: QuizProps) {
   // No quiz available
   if (!quiz) {
     return null;
+  }
+
+  if (!isAuthenticated) {
+    return (
+      <section className="quiz">
+        <div className="quiz__content">
+          {quiz.description && <p className="quiz__description">{quiz.description}</p>}
+          <div className="quiz__results">
+            <div className="quiz__score quiz__score--needs-review">
+              <div className="quiz__score-text">
+                Sign in to submit answers, track your score, and schedule spaced review.
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+    );
   }
 
   // Calculate progress

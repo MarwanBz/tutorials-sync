@@ -1,5 +1,5 @@
 import { useParams, Link, useNavigate, useLocation } from "react-router-dom";
-import { useQuery } from "convex/react";
+import { useConvexAuth, useQuery } from "convex/react";
 import { api } from "../../convex/_generated/api";
 import BlogPost from "../components/BlogPost";
 import CopyPageDropdown from "../components/CopyPageDropdown";
@@ -41,6 +41,7 @@ export default function Post({
   const { slug: routeSlug } = useParams<{ slug: string }>();
   const navigate = useNavigate();
   const location = useLocation();
+  const { isAuthenticated } = useConvexAuth();
   const { setHeadings, setActiveId } = useSidebar();
 
   // Use prop slug if provided (for homepage), otherwise use route slug
@@ -84,6 +85,11 @@ export default function Post({
     post && !page
       ? { currentSlug: post.slug, tags: post.tags, limit: 3 }
       : "skip",
+  );
+
+  const postQuizProgress = useQuery(
+    api.quiz.getMyQuizProgressForPost,
+    isAuthenticated && post && !page ? { postSlug: post.slug } : "skip",
   );
 
   // Fetch footer content from Convex (synced via markdown)
@@ -824,25 +830,27 @@ export default function Post({
           </header>
 
           {/* Progress bar for tutorial quizzes */}
-          {(post.understanding_score !== undefined && post.understanding_score !== null) && (
+          {postQuizProgress && (
             <div className="post-progress-bar">
               <div className="post-progress-header">
                 <span className="post-progress-label">Your Progress</span>
-                <span className={`post-progress-score ${post.understanding_score >= 80 ? 'score-excellent' : post.understanding_score >= 60 ? 'score-good' : 'score-needs-review'}`}>
-                  {post.understanding_score}%
+                <span className={`post-progress-score ${postQuizProgress.lastScore >= 80 ? "score-excellent" : postQuizProgress.lastScore >= 60 ? "score-good" : "score-needs-review"}`}>
+                  {postQuizProgress.lastScore}%
                 </span>
               </div>
               <div className="post-progress-track">
                 <div
-                  className={`post-progress-fill ${post.understanding_score >= 80 ? 'fill-excellent' : post.understanding_score >= 60 ? 'fill-good' : 'fill-needs-review'}`}
-                  style={{ width: `${post.understanding_score}%` }}
+                  className={`post-progress-fill ${postQuizProgress.lastScore >= 80 ? "fill-excellent" : postQuizProgress.lastScore >= 60 ? "fill-good" : "fill-needs-review"}`}
+                  style={{ width: `${postQuizProgress.lastScore}%` }}
                 />
               </div>
-              {post.last_quizzed && (
-                <span className="post-progress-last">
-                  Last quizzed: {format(parseISO(post.last_quizzed), "MMM d, yyyy")}
-                </span>
-              )}
+              <span className="post-progress-last">
+                Last quizzed: {format(new Date(postQuizProgress.lastSubmittedAt), "MMM d, yyyy")}
+              </span>
+              <span className="post-progress-last">
+                Next review: {format(new Date(postQuizProgress.nextReviewAt), "MMM d, yyyy")}
+                {postQuizProgress.dueNow ? " (due now)" : ""}
+              </span>
             </div>
           )}
 

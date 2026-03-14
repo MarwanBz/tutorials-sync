@@ -999,15 +999,13 @@ function DashboardContent() {
   // Default to true for admins so they see all synced content immediately
   const [showAllContent, setShowAllContent] = useState(true);
 
-  // For non-admin: always filter by own token (if loading, pass "skip" to avoid fetching all)
-  // For admin with showAllContent: no filter (undefined = all)
-  // For admin without showAllContent: filter by own token
-  const ownerFilter =
-    isAdmin && showAllContent ? undefined : myTokenId ?? "loading_skip";
-
-  // Convex queries (owner-scoped)
-  // Using "skip" ensures we don't accidentally fetch all content while myTokenId is loading
-  const queryOpts = myTokenId === undefined && !isAdmin ? "skip" : { ownerId: ownerFilter };
+  // Backend enforces tenant scope. Admin can optionally filter to "My Content".
+  const queryOpts =
+    isAdmin && !showAllContent
+      ? myTokenId === undefined || myTokenId === null
+        ? "skip"
+        : { ownerId: myTokenId }
+      : {};
   const posts = useQuery(api.posts.listAll, queryOpts);
   const pages = useQuery(api.pages.listAll, queryOpts);
 
@@ -2731,7 +2729,10 @@ function QuizEditor({
 
   // Fetch the full quiz with questions if editing existing quiz
   // Note: For new quizzes without _id, we don't need to fetch
-  const fullQuiz = useQuery(api.quiz.getQuizById, quiz._id ? { quizId: quiz._id } : "skip");
+  const fullQuiz = useQuery(
+    api.quiz.getQuizByIdForEditor,
+    quiz._id ? { quizId: quiz._id } : "skip",
+  );
 
   // Update editedQuiz when full quiz data is loaded
   useEffect(() => {
@@ -2742,7 +2743,7 @@ function QuizEditor({
         title: fullQuiz.title,
         description: fullQuiz.description,
         questions: fullQuiz.questions,
-        published: true, // getQuizById only returns published quizzes
+        published: fullQuiz.published,
       });
     }
   }, [fullQuiz, quiz._id]);
